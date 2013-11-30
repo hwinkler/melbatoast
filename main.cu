@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 __global__ void add (int *a, int *b, int *c) {
-  *c = *a + *b;
+  c[blockIdx.x] = a[blockIdx.x] + b[blockIdx.x];
 }
 
 void check (const char* msg, int e){
@@ -9,27 +9,40 @@ void check (const char* msg, int e){
 }
 
 int main (void){
-  int a, b, c;
+  const int N = 512;   
+  int *a, *b, *c;
   int *d_a, *d_b, *d_c;
-  int size = sizeof(int);
+  int size = N*sizeof(int);
 
-  check("cudaMalloc a", cudaMalloc((void**)&d_a, size));
-  check("cudaMalloc b",cudaMalloc((void**)&d_b, size));
-  check("cudaMalloc c",cudaMalloc((void**)&d_c, size));
+  a = (int*) calloc(N, sizeof(int));
+  b = (int*) calloc(N, sizeof(int));
+  c = (int*) calloc(N, sizeof(int));
   
-  a = 2;
-  b = 7;
+  check("cudaMalloc d_a", cudaMalloc((void**)&d_a, size));
+  check("cudaMalloc d_b",cudaMalloc((void**)&d_b, size));
+  check("cudaMalloc d_c",cudaMalloc((void**)&d_c, size));
   
-  check("cudaMemcpy d_a<-a", cudaMemcpy (d_a, &a, size, cudaMemcpyHostToDevice));
-  check("cudaMemcpy d_b<-b", cudaMemcpy (d_b, &b, size, cudaMemcpyHostToDevice));
+  for (int i =0; i<N; i++){
+    a[i] = i;
+    b[i] = N/2 - i;
+  }
+  
+  check("cudaMemcpy d_a<-a", cudaMemcpy (d_a, a, size, cudaMemcpyHostToDevice));
+  check("cudaMemcpy d_b<-b", cudaMemcpy (d_b, b, size, cudaMemcpyHostToDevice));
 
-  add<<<1,1>>>(d_a, d_b, d_c);
+  add<<<N,1>>>(d_a, d_b, d_c);
 
-  check("cudaMemcpy c<-d_c", cudaMemcpy (&c, d_c, size, cudaMemcpyDeviceToHost));
+  check("cudaMemcpy c<-d_c", cudaMemcpy (c, d_c, size, cudaMemcpyDeviceToHost));
   check("cudaFree a", cudaFree(d_a));
   check("cudaFree b", cudaFree(d_b));
   check("cudaFree c", cudaFree(d_c));
-  printf ("c= %d\n", c);
+  for (int i =0; i<N; i++){
+    if (c[i] != a[i] + b[i] ){
+      printf ("c[%d]= %d, should be %d\n", i, c[i], a[i] + b[i]);
+      return 1;
+    }
+  }
+  printf("ok\n");
   return 0;
 }
 
