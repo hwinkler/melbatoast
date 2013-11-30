@@ -1,7 +1,8 @@
 #include <stdio.h>
 
 __global__ void add (int *a, int *b, int *c) {
-  c[blockIdx.x] = a[blockIdx.x] + b[blockIdx.x];
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  c[idx] = a[idx] + b[idx];
 }
 
 void check (const char* msg, int e){
@@ -9,7 +10,10 @@ void check (const char* msg, int e){
 }
 
 int main (void){
-  const int N = 512;   
+
+  const int N = 512; // number of vector elements  
+  const int M = 8; // threads per block
+
   int *a, *b, *c;
   int *d_a, *d_b, *d_c;
   int size = N*sizeof(int);
@@ -30,7 +34,7 @@ int main (void){
   check("cudaMemcpy d_a<-a", cudaMemcpy (d_a, a, size, cudaMemcpyHostToDevice));
   check("cudaMemcpy d_b<-b", cudaMemcpy (d_b, b, size, cudaMemcpyHostToDevice));
 
-  add<<<N,1>>>(d_a, d_b, d_c);
+  add<<<N,M>>>(d_a, d_b, d_c);
 
   check("cudaMemcpy c<-d_c", cudaMemcpy (c, d_c, size, cudaMemcpyDeviceToHost));
   check("cudaFree a", cudaFree(d_a));
