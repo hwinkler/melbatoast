@@ -1,8 +1,10 @@
 #include <stdio.h>
 
-__global__ void add (int *a, int *b, int *c) {
+__global__ void add (int *a, int *b, int *c, int n) {
   int idx = threadIdx.x + blockIdx.x * blockDim.x;
-  c[idx] = a[idx] + b[idx];
+  if (idx < n){
+    c[idx] = a[idx] + b[idx];
+  }
 }
 
 void check (const char* msg, int e){
@@ -11,7 +13,7 @@ void check (const char* msg, int e){
 
 int main (void){
 
-  const int N = 512; // number of vector elements  
+  const int N = 450; // number of vector elements  
   const int M = 8; // threads per block
 
   int *a, *b, *c;
@@ -34,7 +36,7 @@ int main (void){
   check("cudaMemcpy d_a<-a", cudaMemcpy (d_a, a, size, cudaMemcpyHostToDevice));
   check("cudaMemcpy d_b<-b", cudaMemcpy (d_b, b, size, cudaMemcpyHostToDevice));
 
-  add<<<N,M>>>(d_a, d_b, d_c);
+  add<<<N,M>>>(d_a, d_b, d_c, N);
 
   check("cudaMemcpy c<-d_c", cudaMemcpy (c, d_c, size, cudaMemcpyDeviceToHost));
   check("cudaFree a", cudaFree(d_a));
