@@ -35,6 +35,23 @@ int main (){
   int e2[3] = {0, na, nb};
   result = result && _verify (dimensions, i2, e2);
 
+  int i3[3] = {0, 0, -1};
+  int e3[3] = {0, nc, na*nb};
+  result = result && _verify (dimensions, i3, e3);
+
+  int i4[3] = {-1, 1, 2};
+  int e4[3] = {na*nb*2 + nb, na, 1 };
+  result = result && _verify (dimensions, i4, e4);
+
+
+  int i5[3] = {1, -1, 2};
+  int e5[3] = {na*nb*2 + 1, nb , na };
+
+  int i6[3] = {1, 1, -1};
+  int e6[3] = {na + 1, nc , na * nb };
+
+  result = result && _verify (dimensions, i5, e5);
+
   if (result){
     printf("passed\n");
   } else {
