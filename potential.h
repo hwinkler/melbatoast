@@ -10,6 +10,8 @@ typedef struct Potential {
   int numChildren;
   struct Potential* parents[MAX_PARENTS];
   struct Potential* children[MAX_CHILDREN];
+  int indexInParent [MAX_PARENTS];
+  int indexInChild [MAX_CHILDREN];
 } Potential;
 
 typedef struct State {

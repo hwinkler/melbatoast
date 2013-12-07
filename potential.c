@@ -20,13 +20,19 @@ void _initPotential(Potential*p,
   for (int iParent=0; iParent < numParents; iParent++){
     Potential * parent = parents[iParent];
     numConditionals *= parent->numStates;
-    parent->children[parent->numChildren++] = p;
+    int indexOfChildInParent = parent->numChildren;
+    parent->children[indexOfChildInParent] = p;
+    parent->indexInChild[indexOfChildInParent] = iParent;
+    parent->numChildren++;
   }
   memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
   memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
   memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
+  memset (p->indexInChild, 0, sizeof(int) * MAX_CHILDREN);
   memcpy (p->parents,  parents, numParents);
   p->numParents = numParents;
+
+  
 }
   
 
