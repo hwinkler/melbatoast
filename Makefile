@@ -10,4 +10,6 @@ tests: projection.o tests/projection.o
 
 projection.o: projection.c projection.h
 
+potential.o: potential.c potential.h projection.h
+
 potential: potential.o projection.o

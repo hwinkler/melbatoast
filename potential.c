@@ -1,89 +1,64 @@
 #include <stdbool.h>
 #include <stddef.h>
-#include "potential.h"
-
-bool _isParent(Potential* child, Potential* test){
-  Potential* parent = NULL;
-  for (int i = 0; 
-       parent != NULL && i < MAX_PARENTS;
-       i++){
-    parent = child->parents[i];
-    if (parent == test){
-      return true;
-    }
-  }
-  return false;
-}
-
-int sample (Potential* potential, State* states[],int numStates) {
-  for (int i=0; i< numStates; i++){
-    Potential* statePotential =  states[i]->potential;
-    if (_isParent (potential, statePotential)){
-      //statePotential is one of our parents
-      
-    } else if (_isParent (statePotential, potential)) {
-      //statePotential is one of our children
-      
-        
-    }
-  }
-  return -1;
-}
-
-#include <stddef.h>
 #include <string.h>
+#include "potential.h"
 #include "projection.h"
+
+void _initDistribution (float* distribution, int n){
+  for (int i=0; i< n; i++){
+    distribution[i] = 1.0f;
+  }
+}
+
+void _initPotential(Potential*p, 
+                   int numStates,
+                   float* conditionals,
+                   Potential** parents,
+                   int numParents) {
+  p->numStates = numStates;
+  int numConditionals = numStates;
+  for (int iParent=0; iParent < numParents; iParent++){
+    numConditionals *= parents[iParent]->numStates;
+  }
+  memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
+}
+  
 
 int main (int argc, char ** argv) {
   float conditionals [2 + 4+ 4 + 4 + 8];
   Potential a,b,c,d,e;
 
   // P(A)
-  a.numStates = 2;
-  a.conditionals = conditionals + 0;
-  a.conditionals[0] = 0.4f;
-  a.conditionals[1] = 0.6f;
-  memset (a.parents, 0, sizeof(Potential*) * (MAX_PARENTS+1)) ;
-  
+
+  _initPotential (&a, 2, (float []){0.4f, 0.6f}, 
+                  (Potential *[]) {NULL}, 0 );
+
   // P(B|A)
-  b.numStates = 2;
-  b.conditionals = a.conditionals + a.numStates;
-  b.conditionals[0] = 0.3f;     b.conditionals[2] = 0.8f;
-  b.conditionals[1] = 0.7f;     b.conditionals[3] = 0.2f;
-  memset (b.parents, 0, sizeof(Potential*) * (MAX_PARENTS+1)) ;
-  b.parents[0] = &a;
+  _initPotential (&b, 2, (float []){0.3f, 0.7f, 0.8f, 0.2f}, 
+                  (Potential *[]) {&a}, 1 );
 
   // P(C|A)
-  c.numStates = 2;
-  c.conditionals = b.conditionals + a.numStates * b.numStates;
-  c.conditionals[0] = 0.3f;     c.conditionals[2] = 0.8f;
-  c.conditionals[1] = 0.7f;     c.conditionals[3] = 0.2f;
-  memset (c.parents, 0, sizeof(Potential*) * (MAX_PARENTS+1)) ;
-  c.parents[0] = &a;
+  _initPotential (&c, 2, (float []){0.7f, 0.3f, 0.4f, 0.6f}, 
+                  (Potential *[]) {&a}, 1 );
 
+ 
   // P(D|B)
-  d.numStates = 2;
-  d.conditionals = c.conditionals + a.numStates * c.numStates;
-  d.conditionals[0] = 0.5f;     d.conditionals[2] = 0.1f;
-  d.conditionals[1] = 0.5f;     d.conditionals[3] = 0.9f;
-  memset (d.parents, 0, sizeof(Potential*) * (MAX_PARENTS+1)) ;
-  d.parents[0] = &b;
+  _initPotential (&d, 2, (float []){0.5f, 0.5f, 0.1f, 0.9f}, 
+                  (Potential *[]) {&b}, 1 );
 
   // P(E|D,C)
-  e.numStates = 2;
-  e.conditionals = d.conditionals + b.numStates * d.numStates;
-  e.conditionals[0] = 0.9f;    
-  e.conditionals[1] = 0.1f;    
-  e.conditionals[2] = 0.999f;
-  e.conditionals[3] = 0.001f;
-  e.conditionals[4] = 0.999f;    
-  e.conditionals[5] = 0.001f;    
-  e.conditionals[6] = 0.999f;
-  e.conditionals[7] = 0.001f;
+  _initPotential (&e, 2, (float []){
+      0.9f,  
+        0.1f,  
+        0.999f,
+        0.001f,
+        0.999f,  
+        0.001f,  
+        0.999f,
+        0.001f
+        },
+    (Potential *[]) {&d, &c}, 1 );
 
-  memset (e.parents, 0, sizeof(Potential*) * (MAX_PARENTS+1)) ;
-  e.parents[0] = &d;
-  e.parents[1] = &c;
 
   //data: B=n, E=n
   // initial config: ynyyn  (we use y=0, n=1)
@@ -97,23 +72,37 @@ int main (int argc, char ** argv) {
   const int numConfigurations = 100;
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
+  
+  // Each random variable is the first, or most rapidly-varying, 
+  // index within its own potential. We need a lookup table for
+  // each RV telling its index in the potentials in which it participates
+  // as a child or a parent.
+
+  for (int i=0; i<numPotentials; i++){
+    Potential *p = potentials[i];
+    PotentialRef refs [MAX_CHILDREN];
+    
+    
+  }
+
+  State* states[] = {&sa, &sb, &sc, &sd, &se}; //causal order
+ 
   for (int i=0; i<numConfigurations; i++){
     
     for (int j=0; j < numPotentials; j++){
       Potential *p = potentials[j];
       float distribution [MAX_STATES];
-      for (int k=0; k< MAX_STATES; k++){
-        distribution[i] = 1.0f;
-      }
-
-      // for every parent
-      for (int iParent =0; iParent<MAX_PARENTS && p->parents[iParent] != NULL; iParent++){
-        Potential *parent = p->parents[iParent];
-        
-
-      }
+      _initDistribution(distribution, MAX_STATES);
       
-      int offset=0, length=0, stride = 0;
+      PotentialRef** potentialsInvolving ;
+      int numPotentialsInvolving;
+      for (int ip =0; ip < numPotentialsInvolving; ip++){
+        int offset=0, length=0, stride = 0;
+        PotentialRef* ref = potentialsInvolving[ip];
+        int myIndex = ref->dimensionIndex;
+        Potential * otherPotential = ref->potential;
+        
+      }
      
     }
     
