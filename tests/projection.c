@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "../potential.h"
+#include "../projection.h"
 
 int _verify (int* dimensions,int* indices, int* expected){
   int offsetOut=-1, lengthOut=-1, strideOut=-1;
@@ -21,7 +21,7 @@ int _verify (int* dimensions,int* indices, int* expected){
   
 
 int main (){
-  printf("running test potential\n");
+  printf("running test projection\n");
   const int na = 5, nb = 5, nc = 4;
   
   int dimensions[3] = {na, nb, nc};
