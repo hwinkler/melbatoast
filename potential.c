@@ -26,7 +26,7 @@ void _initPotential(Potential*p,
   memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
   memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
   memcpy (p->parents,  parents, numParents);
-  p->numParents = 0;
+  p->numParents = numParents;
 }
   
 
