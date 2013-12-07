@@ -3,10 +3,11 @@
 #include "potential.h"
 
 bool _isParent(Potential* child, Potential* test){
-  int i = 0;
-  for (Potential* parent = child->parents[0]; 
-       parent != NULL && i++ < MAX_PARENTS;
-       parent ++){
+  Potential* parent = NULL;
+  for (int i = 0; 
+       parent != NULL && i < MAX_PARENTS;
+       i++){
+    parent = child->parents[i];
     if (parent == test){
       return true;
     }
