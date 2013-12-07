@@ -1,9 +1,11 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include "potential.h"
 
 bool _isParent(Potential* child, Potential* test){
-  for (Potential* parent = child.parents[0]; 
-       parent!= null && (parent - child.parents < MAX_PARENTS);
+  int i = 0;
+  for (Potential* parent = child->parents[0]; 
+       parent != NULL && i++ < MAX_PARENTS;
        parent ++){
     if (parent == test){
       return true;
@@ -13,16 +15,16 @@ bool _isParent(Potential* child, Potential* test){
 }
 
 int sample (Potential* potential, State* states[],int numStates) {
-  for (int i=0; i<numStates, i++){
-    Potential* statePotential =  states[i].potential;
+  for (int i=0; i< numStates; i++){
+    Potential* statePotential =  states[i]->potential;
     if (_isParent (potential, statePotential)){
       //statePotential is one of our parents
-
-    } else if (_isParent (statePotential, potential) {
+      
+    } else if (_isParent (statePotential, potential)) {
       //statePotential is one of our children
-
-
+      
+        
     }
   }
-
+  return -1;
 }

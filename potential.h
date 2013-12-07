@@ -1,10 +1,11 @@
 #pragma once
-const int MAX_PARENTS=5;
+
+#define MAX_PARENTS 5
 
 typedef struct Potential {
   int   numStates;
   float *conditionals;
-  Potential* parents[MAX_PARENTS];
+  struct Potential* parents[MAX_PARENTS];
 } Potential;
 
 typedef struct State {
