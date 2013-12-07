@@ -18,9 +18,15 @@ void _initPotential(Potential*p,
   p->numStates = numStates;
   int numConditionals = numStates;
   for (int iParent=0; iParent < numParents; iParent++){
-    numConditionals *= parents[iParent]->numStates;
+    Potential * parent = parents[iParent];
+    numConditionals *= parent->numStates;
+    parent->children[parent->numChildren++] = p;
   }
   memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
+  memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
+  memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
+  memcpy (p->parents,  parents, numParents);
+  p->numParents = 0;
 }
   
 
@@ -40,7 +46,6 @@ int main (int argc, char ** argv) {
   // P(C|A)
   _initPotential (&c, 2, (float []){0.7f, 0.3f, 0.4f, 0.6f}, 
                   (Potential *[]) {&a}, 1 );
-
  
   // P(D|B)
   _initPotential (&d, 2, (float []){0.5f, 0.5f, 0.1f, 0.9f}, 
@@ -69,7 +74,6 @@ int main (int argc, char ** argv) {
   sd.potential = &d; sd.state = 0;
   se.potential = &e; se.state = 1;
 
-  const int numConfigurations = 100;
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
   
@@ -77,7 +81,7 @@ int main (int argc, char ** argv) {
   // index within its own potential. We need a lookup table for
   // each RV telling its index in the potentials in which it participates
   // as a child or a parent.
-
+  
   for (int i=0; i<numPotentials; i++){
     Potential *p = potentials[i];
     PotentialRef refs [MAX_CHILDREN];
@@ -87,17 +91,19 @@ int main (int argc, char ** argv) {
 
   State* states[] = {&sa, &sb, &sc, &sd, &se}; //causal order
  
+  const int numConfigurations = 100;
   for (int i=0; i<numConfigurations; i++){
-    
     for (int j=0; j < numPotentials; j++){
       Potential *p = potentials[j];
-      float distribution [MAX_STATES];
-      _initDistribution(distribution, MAX_STATES);
+      float distribution [p->numStates];
+      _initDistribution(distribution, p->numStates);
       
       PotentialRef** potentialsInvolving ;
       int numPotentialsInvolving;
+      
       for (int ip =0; ip < numPotentialsInvolving; ip++){
         int offset=0, length=0, stride = 0;
+
         PotentialRef* ref = potentialsInvolving[ip];
         int myIndex = ref->dimensionIndex;
         Potential * otherPotential = ref->potential;
