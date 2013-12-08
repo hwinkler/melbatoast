@@ -1,4 +1,5 @@
-CC=c99
+CC=clang
+CFLAGS=-g  -fno-omit-frame-pointer 
 
 all: tests potential
 

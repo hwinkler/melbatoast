@@ -15,6 +15,7 @@ typedef struct Potential {
   int dimensions [MAX_PARENTS + 1];
 
   int state;  /// TODO remove. This is the only mutable field.
+  int isFrozen;
 
 } Potential;
 

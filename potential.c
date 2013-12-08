@@ -85,6 +85,8 @@ void _initPotential(Potential*p,
     printf("setting dim %d  = %d\n", iDim, parent->numStates);
     p->dimensions[iDim] = parent->numStates;
   }
+  p->state =0;
+  p->isFrozen = false;
 }
   
 void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distribution){
@@ -97,17 +99,29 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
     assert (iParent+1 < numDimensions);
     indices[iParent+1] = potential->parents[iParent]->state;
   }
+
+  assert (indexUnfixed < numDimensions);
   indices[indexUnfixed] = -1;
 
   int offsetOut = 0, lengthOut =0, strideOut =0;
   projection ( potential->dimensions, indices, numDimensions,
                &offsetOut, &lengthOut, &strideOut);
-
+  assert (lengthOut == potential->numStates);
+  printf("conditionalGiven unfixed %d [", indexUnfixed );
   for (int iState =0; iState < potential->numStates; iState++){
-    assert (iState * strideOut <  potential->numStates);
     assert (offsetOut + iState * strideOut < potential->numConditionals);
     distribution[iState] *= potential->conditionals[offsetOut + iState * strideOut];
+
+    printf("%6.4f ",  potential->conditionals[offsetOut + iState * strideOut]);
   }
+  printf("]\n");
+}
+
+void _printArray(float * f, int n){
+  for (int i=0; i<n; i++){
+    printf("%6.4f ", f[i]);
+  }
+  printf("\n");
 }
 
 
@@ -116,11 +130,11 @@ int main (int argc, char ** argv) {
 
   mt_seed();
 
-  float conditionals[2+4+4+4+8];
+  const int numConditionals = 2+4+4+4+8 ;
+  float conditionals[numConditionals];
   Potential a,b,c,d,e;
 
   printf("Initializing potentials\n");
-  // P(A)
 
   float *ca = conditionals+ 0;
   memcpy (ca,( (float []){0.4f, 0.6f}), 2 * sizeof(float));
@@ -134,6 +148,8 @@ int main (int argc, char ** argv) {
   memcpy (ce,( (float []) {
         0.9f, 0.1f, 0.999f,0.001f,
           0.999f, 0.001f,  0.999f,0.001f}), 8 * sizeof(float));
+
+  // P(A)
 
   _initPotential (&a, 2, ca, 
                   (Potential *[]) {NULL}, 0 );
@@ -157,7 +173,7 @@ int main (int argc, char ** argv) {
 
   // P(E|D,C)
   _initPotential (&e, 2, ce,
-    (Potential *[]) {&d, &c}, 1 );
+    (Potential *[]) {&d, &c}, 2 );
   printf("P(E|D,C)\n");
 
   //data: B=n, E=n
@@ -168,19 +184,32 @@ int main (int argc, char ** argv) {
   c.state = 0;
   d.state = 0;
   e.state = 1;
+  b.isFrozen = e.isFrozen = true;
 
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
   
 
   const int numConfigurations = 100;
+
+  int numPossibleConfigurations = 1;
+  for (int i=0; i< numPotentials; i++){
+    numPossibleConfigurations *= potentials[i]->numStates;
+  }
+  int counts[numPossibleConfigurations];
+  memset (counts, 0, numPossibleConfigurations* sizeof(int));
+  
   for (int i=0; i<numConfigurations; i++){
     for (int j=0; j < numPotentials; j++){
       Potential *p = potentials[j];
+      if (p->isFrozen){
+        continue;
+      }
       float distribution [p->numStates];
       _initDistribution(distribution, p->numStates);
 
-      printf("i=%d, j=%d\n", i, j);
+      printf("\n");
+      printf("config #=%d, potential=%d\n", i, j);
 
       // Obtain the conditional distribution for the current potential
 
@@ -192,16 +221,19 @@ int main (int argc, char ** argv) {
       // Multiply in the distribution for this variable in each child potential
       for (int iChild =0; iChild < p->numChildren; iChild++){
         Potential * child = p->children[iChild];
-        _conditionalGiven (child, p->indexInChild[iChild], distribution);
+        // add one to indexInChild, since the indexInChild refers to zero based
+        // among the parents -- but zer oindex is reserved to the potential's variable
+        _conditionalGiven (child, p->indexInChild[iChild] + 1, distribution);
         printf("got  distribution for child %d\n", iChild);
+        _printArray(distribution, p->numStates);
       }
       
       _normalizeDistribution (distribution, p->numStates);
       printf("normalized  distribution \n");
+      _printArray(distribution, p->numStates);
 
       float cumulative [p->numStates];
       _cumulativeDistribution (distribution, cumulative, p->numStates);
-      printf("cululative  distribution \n");
 
       int newState = _drawFromCumulative(cumulative, p->numStates);
 
@@ -209,7 +241,21 @@ int main (int argc, char ** argv) {
 
       p->state = newState;
     }
+
+    // which configuration is this?
+
+    int config = 0;
+    for (int j=0; j < numPotentials; j++){
+      config *= potentials[j]->numStates;
+      config += potentials[j]->state;
+    }
     
+    counts[config] ++;
   }
 
+
+  for (int j=0; j < numPossibleConfigurations; j++){
+    printf("%4d: %4d\n", j, counts[j]);
+
+  }
 }
