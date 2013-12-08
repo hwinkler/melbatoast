@@ -1,8 +1,8 @@
 #include "projection.h"
 
 void projection (
-                 int *dimensions,
-                 int *indices,
+                 const int *const dimensions,
+                 const int *const indices,
                  int numDimensions,
                  int *offsetOut,
                  int *lengthOut,

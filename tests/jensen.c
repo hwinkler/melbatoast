@@ -8,7 +8,8 @@ int main (int argc, char ** argv){
 
   const int numConditionals = 2+4+4+4+8 ;
   float conditionals[numConditionals];
-  Potential a,b,c,d,e;
+  Potential potentials [5]; //causal order
+  Potential * a = potentials+0, *b = potentials+1, *c=potentials+2, *d=potentials+3, *e = potentials+4;
 
 
   float *ca = conditionals+ 0;
@@ -26,52 +27,48 @@ int main (int argc, char ** argv){
 
   // P(A)
 
-  initPotential (&a, 2, ca, 
+  initPotential (a, 2, ca, 
                   (Potential *[]) {NULL}, 0 );
 
   
  
   // P(B|A)
-  initPotential (&b, 2, cb, 
-                  (Potential *[]) {&a}, 1 );
+  initPotential (b, 2, cb, 
+                  (Potential *[]) {a}, 1 );
   
 
   // P(C|A)
-  initPotential (&c, 2, cc, 
-                  (Potential *[]) {&a}, 1 );
+  initPotential (c, 2, cc, 
+                  (Potential *[]) {a}, 1 );
    
 
   // P(D|B)
-  initPotential (&d, 2, cd, 
-                  (Potential *[]) {&b}, 1 );
+  initPotential (d, 2, cd, 
+                  (Potential *[]) {b}, 1 );
   
 
   // P(E|D,C)
-  initPotential (&e, 2, ce,
-                  (Potential *[]) {&d, &c}, 2 );
+  initPotential (e, 2, ce,
+                  (Potential *[]) {d, c}, 2 );
   
 
   //data: B=n, E=n
   // initial config: ynyyn  (we use y=0, n=1)
 
-  a.state = 0;
-  b.state = 1;
-  c.state = 0;
-  d.state = 0;
-  e.state = 1;
-  b.isFrozen = e.isFrozen = true;
+  int  states [5] = {0,1,0,0,1};
 
-  Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
+  // b->isFrozen = e->isFrozen = true;
+
   const int numPotentials = 5;
 
 
   int numPossibleConfigurations = 1;
   for (int i=0; i< numPotentials; i++){
-    numPossibleConfigurations *= potentials[i]->numStates;
+    numPossibleConfigurations *= potentials[i].numStates;
   }
   int counts[numPossibleConfigurations];
 
-  gibbs(potentials, numPotentials, counts, numPossibleConfigurations, 1000000);
+  gibbs(potentials, numPotentials, states, counts, numPossibleConfigurations, 1000000);
 
 
   for (int j=0; j < numPossibleConfigurations; j++){

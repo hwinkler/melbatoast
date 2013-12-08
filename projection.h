@@ -10,9 +10,9 @@
 ///
 
 void projection (
-                 int *dimensions,   /// Array of the lengths of each dimension.
-                 int *indices,      /// Array of fixed indices for each dimension.
-                                    /// One should be -1, meanning unfixed.
+                 const int *const dimensions,   /// Array of the lengths of each dimension.
+                 const int *const indices,      /// Array of fixed indices for each dimension.
+                                                /// One should be -1, meanning unfixed.
                  int numDimensions, /// Length of the dimensions and indices arrays.
                  int *offsetOut,    /// Output: start output position index.
                  int *lengthOut,    /// Output: length of output dimension.

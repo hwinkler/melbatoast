@@ -35,7 +35,6 @@ void initPotential(Potential*p,
     
     p->dimensions[iDim] = parent->numStates;
   }
-  p->state =0;
   p->isFrozen = false;
 }
   
