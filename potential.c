@@ -39,11 +39,14 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
 
 int _drawFromCumulative (float* cumulative, int n){
   double r =  mt_drand();
+  printf ("rand = %f, n = %d\n", r, n);
   for (int i=0; i<n; i++){
-    if ( r > cumulative[i]){
+    printf("cumulative[%d] = %f\n", i, cumulative[i]);
+    if ( r < cumulative[i]){
       return i;
     }
   }
+  
   assert (false);
   return 0;
 }
@@ -66,21 +69,20 @@ void _initPotential(Potential*p,
     parent->numChildren++;
   }
   p->numConditionals = numConditionals;
-
-  memset (p->conditionals, 0, sizeof(float) * MAX_TABLE);
+  p->conditionals = conditionals;
   memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
   memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
   memset (p->indexInChild, 0, sizeof(int) * MAX_CHILDREN);
 
-  memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
-  memcpy (p->parents,  parents, numParents);
+  memcpy (p->parents,  parents, numParents * sizeof(Potential*));
   p->numParents = numParents;
    
+  printf("initialized all but dimensions\n");
   int numDimensions = 1 + numParents;
-
   p->dimensions[0] = numStates;
   for (int iDim = 1; iDim < numDimensions; iDim++){
     Potential *parent = p->parents[iDim-1];
+    printf("setting dim %d  = %d\n", iDim, parent->numStates);
     p->dimensions[iDim] = parent->numStates;
   }
 }
@@ -114,43 +116,47 @@ int main (int argc, char ** argv) {
 
   mt_seed();
 
-
+  float conditionals[2+4+4+4+8];
   Potential a,b,c,d,e;
 
   printf("Initializing potentials\n");
   // P(A)
 
-  _initPotential (&a, 2, (float []){0.4f, 0.6f}, 
+  float *ca = conditionals+ 0;
+  memcpy (ca,( (float []){0.4f, 0.6f}), 2 * sizeof(float));
+  float *cb = ca + 2;
+  memcpy (cb,( (float []){0.3f, 0.7f, 0.8f, 0.2f}), 4 * sizeof(float));
+  float *cc = cb + 4;
+  memcpy (cc,( (float []){0.7f, 0.3f, 0.4f, 0.6f}), 4 * sizeof(float));
+  float *cd = cc + 4;
+  memcpy (cd,( (float []){0.5f, 0.5f, 0.1f, 0.9}), 4 * sizeof(float));
+  float *ce = cd + 4;
+  memcpy (ce,( (float []) {
+        0.9f, 0.1f, 0.999f,0.001f,
+          0.999f, 0.001f,  0.999f,0.001f}), 8 * sizeof(float));
+
+  _initPotential (&a, 2, ca, 
                   (Potential *[]) {NULL}, 0 );
 
   printf("P(A)\n");
  
   // P(B|A)
-  _initPotential (&b, 2, (float []){0.3f, 0.7f, 0.8f, 0.2f}, 
+  _initPotential (&b, 2, cb, 
                   (Potential *[]) {&a}, 1 );
   printf("P(B|A)\n");
 
   // P(C|A)
-  _initPotential (&c, 2, (float []){0.7f, 0.3f, 0.4f, 0.6f}, 
+  _initPotential (&c, 2, cc, 
                   (Potential *[]) {&a}, 1 );
    printf("P(C|A)\n");
 
   // P(D|B)
-  _initPotential (&d, 2, (float []){0.5f, 0.5f, 0.1f, 0.9f}, 
+  _initPotential (&d, 2, cd, 
                   (Potential *[]) {&b}, 1 );
   printf("P(D|B)\n");
 
   // P(E|D,C)
-  _initPotential (&e, 2, (float []){
-      0.9f,  
-        0.1f,  
-        0.999f,
-        0.001f,
-        0.999f,  
-        0.001f,  
-        0.999f,
-        0.001f
-        },
+  _initPotential (&e, 2, ce,
     (Potential *[]) {&d, &c}, 1 );
   printf("P(E|D,C)\n");
 

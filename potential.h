@@ -2,11 +2,10 @@
 
 #define MAX_PARENTS 5
 #define MAX_CHILDREN 5
-#define MAX_TABLE  (MAX_PARENTS*MAX_PARENTS*MAX_PARENTS*MAX_PARENTS*MAX_PARENTS)
 
 typedef struct Potential {
   int   numStates;
-  float conditionals[MAX_TABLE];
+  float *conditionals;
   int numConditionals;   // this is here mainly for debugging
   int numParents;
   int numChildren;
