@@ -184,7 +184,7 @@ int main (int argc, char ** argv) {
   c.state = 0;
   d.state = 0;
   e.state = 1;
-  b.isFrozen = e.isFrozen = true;
+  //b.isFrozen = e.isFrozen = true;
 
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
