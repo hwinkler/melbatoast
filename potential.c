@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
+#include <stdlib.h>
+
 #include "potential.h"
 #include "projection.h"
 
@@ -23,6 +26,14 @@ void _normalizeDistribution (float* distribution, int n){
 }
 
 void _cumulativeDistribution (float* distribution, float * cumulative, int n){
+  cumulative[0] = distribution[0];
+  for (int i=1; i< n; i++){
+    cumulative[i] = cumulative[i-1] + distribution[i] ;
+  }
+}
+
+void _drawFromCumulative (float* cumulative, int n){
+  
   cumulative[0] = distribution[0];
   for (int i=1; i< n; i++){
     cumulative[i] = cumulative[i-1] + distribution[i] ;
@@ -87,6 +98,8 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
 }
 
 int main (int argc, char ** argv) {
+  srand(time(NULL));
+
   float conditionals [2 + 4+ 4 + 4 + 8];
   Potential a,b,c,d,e;
 
@@ -155,6 +168,8 @@ int main (int argc, char ** argv) {
       _normalizeDistribution (distribution, p->numStates);
       float cumulative [p->numStates];
       _cumulativeDistribution (distribution, cumulative, p->numStates);
+
+      int newState = _drawFromCumulative(cumulative, p->numStates);
 
     }
     
