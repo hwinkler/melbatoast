@@ -10,6 +10,26 @@ void _initDistribution (float* distribution, int n){
     distribution[i] = 1.0f;
   }
 }
+void _normalizeDistribution (float* distribution, int n){
+  float sum = 0.f;
+  for (int i=0; i< n; i++){
+    assert(distribution[i] > 0.f);
+    sum += distribution[i] ;
+  }
+  float scale = 1.f / sum;
+  for (int i=0; i< n; i++){
+    distribution[i] *= scale ;
+  }
+}
+
+void _cumulativeDistribution (float* distribution, float * cumulative, int n){
+  cumulative[0] = distribution[0];
+  for (int i=1; i< n; i++){
+    cumulative[i] = cumulative[i-1] + distribution[i] ;
+  }
+}
+
+
 
 void _initPotential(Potential*p, 
                    int numStates,
@@ -125,10 +145,17 @@ int main (int argc, char ** argv) {
 
       Potential* potential = p;
       _conditionalGiven (p, 0, distribution);
+      
+      // Multiply in the distribution for this variable in each child potential
+      for (int iChild =0; iChild < p->numChildren; iChild++){
+        Potential * child = p->children[iChild];
+        _conditionalGiven (child, p->indexInChild[iChild], distribution);
+      }
+      
+      _normalizeDistribution (distribution, p->numStates);
+      float cumulative [p->numStates];
+      _cumulativeDistribution (distribution, cumulative, p->numStates);
 
-      
-      
-     
     }
     
   }
