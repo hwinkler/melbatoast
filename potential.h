@@ -19,3 +19,9 @@ typedef struct Potential {
 
 } Potential;
 
+extern void initPotential(Potential*p, 
+                    int numStates,
+                    float* conditionals,
+                    Potential** parents,
+                   int numParents);
+

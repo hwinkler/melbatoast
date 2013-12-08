@@ -7,7 +7,10 @@
 #include "potential.h"
 #include "projection.h"
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
+
 #define DPRINT(...)                                             \
   do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
 
@@ -54,44 +57,6 @@ int _drawFromCumulative (float* cumulative, int n){
   return 0;
 }
 
-
-
-void _initPotential(Potential*p, 
-                    int numStates,
-                    float* conditionals,
-                    Potential** parents,
-                    int numParents) {
-  p->numStates = numStates;
-  int numConditionals = numStates;
-  for (int iParent=0; iParent < numParents; iParent++){
-    Potential * parent = parents[iParent];
-    numConditionals *= parent->numStates;
-    int indexOfChildInParent = parent->numChildren;
-    parent->children[indexOfChildInParent] = p;
-    parent->indexInChild[indexOfChildInParent] = iParent;
-    parent->numChildren++;
-  }
-  p->numConditionals = numConditionals;
-  p->conditionals = conditionals;
-  memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
-  memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
-  memset (p->indexInChild, 0, sizeof(int) * MAX_CHILDREN);
-
-  memcpy (p->parents,  parents, numParents * sizeof(Potential*));
-  p->numParents = numParents;
-   
-  
-  int numDimensions = 1 + numParents;
-  p->dimensions[0] = numStates;
-  for (int iDim = 1; iDim < numDimensions; iDim++){
-    Potential *parent = p->parents[iDim-1];
-    
-    p->dimensions[iDim] = parent->numStates;
-  }
-  p->state =0;
-  p->isFrozen = false;
-}
-  
 void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distribution){
 
   int numDimensions = potential->numParents + 1;
@@ -128,81 +93,14 @@ void _printArray(float * f, int n){
 }
 
 
-int main (int argc, char ** argv) {
+void gibbs (Potential** potentials, int numPotentials, 
+            int counts[], int numCounts, int numIterations) {
   
-
   mt_seed();
 
-  const int numConditionals = 2+4+4+4+8 ;
-  float conditionals[numConditionals];
-  Potential a,b,c,d,e;
-
+  memset (counts, 0, numCounts* sizeof(int));
   
-
-  float *ca = conditionals+ 0;
-  memcpy (ca,( (float []){0.4f, 0.6f}), 2 * sizeof(float));
-  float *cb = ca + 2;
-  memcpy (cb,( (float []){0.3f, 0.7f, 0.8f, 0.2f}), 4 * sizeof(float));
-  float *cc = cb + 4;
-  memcpy (cc,( (float []){0.7f, 0.3f, 0.4f, 0.6f}), 4 * sizeof(float));
-  float *cd = cc + 4;
-  memcpy (cd,( (float []){0.5f, 0.5f, 0.1f, 0.9}), 4 * sizeof(float));
-  float *ce = cd + 4;
-  memcpy (ce,( (float []) {
-        0.9f, 0.1f, 0.999f,0.001f,
-          0.999f, 0.001f,  0.999f,0.001f}), 8 * sizeof(float));
-
-  // P(A)
-
-  _initPotential (&a, 2, ca, 
-                  (Potential *[]) {NULL}, 0 );
-
-  
- 
-  // P(B|A)
-  _initPotential (&b, 2, cb, 
-                  (Potential *[]) {&a}, 1 );
-  
-
-  // P(C|A)
-  _initPotential (&c, 2, cc, 
-                  (Potential *[]) {&a}, 1 );
-   
-
-  // P(D|B)
-  _initPotential (&d, 2, cd, 
-                  (Potential *[]) {&b}, 1 );
-  
-
-  // P(E|D,C)
-  _initPotential (&e, 2, ce,
-                  (Potential *[]) {&d, &c}, 2 );
-  
-
-  //data: B=n, E=n
-  // initial config: ynyyn  (we use y=0, n=1)
-
-  a.state = 0;
-  b.state = 1;
-  c.state = 0;
-  d.state = 0;
-  e.state = 1;
-  b.isFrozen = e.isFrozen = true;
-
-  Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
-  const int numPotentials = 5;
-  
-
-  const int numConfigurations = 100;
-
-  int numPossibleConfigurations = 1;
-  for (int i=0; i< numPotentials; i++){
-    numPossibleConfigurations *= potentials[i]->numStates;
-  }
-  int counts[numPossibleConfigurations];
-  memset (counts, 0, numPossibleConfigurations* sizeof(int));
-  
-  for (int i=0; i<numConfigurations; i++){
+  for (int i=0; i<numIterations; i++){
     
     
 
@@ -258,9 +156,4 @@ int main (int argc, char ** argv) {
     counts[config] ++;
   }
 
-
-  for (int j=0; j < numPossibleConfigurations; j++){
-    printf("%4d: %4d\n", j, counts[j]);
-
-  }
 }
