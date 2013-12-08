@@ -3,8 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
-
-#include "potential.h"
+#include "gibbs.h"
 #include "projection.h"
 
 #ifndef DEBUG
