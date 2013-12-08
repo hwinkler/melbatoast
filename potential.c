@@ -2,11 +2,14 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
-#include <time.h>
 #include <stdlib.h>
 
 #include "potential.h"
 #include "projection.h"
+
+// TODO: including mtwist.h caused duplicate defs in the linker
+extern double mt_drand();
+extern void mt_seed();
 
 void _initDistribution (float* distribution, int n){
   for (int i=0; i< n; i++){
@@ -32,12 +35,15 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
   }
 }
 
-void _drawFromCumulative (float* cumulative, int n){
-  
-  cumulative[0] = distribution[0];
-  for (int i=1; i< n; i++){
-    cumulative[i] = cumulative[i-1] + distribution[i] ;
+int _drawFromCumulative (float* cumulative, int n){
+  double r =  mt_drand();
+  for (int i=0; i<n; i++){
+    if ( r > cumulative[i]){
+      return i;
+    }
   }
+  assert (false);
+  return 0;
 }
 
 
@@ -98,7 +104,7 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
 }
 
 int main (int argc, char ** argv) {
-  srand(time(NULL));
+  mt_seed();
 
   float conditionals [2 + 4+ 4 + 4 + 8];
   Potential a,b,c,d,e;
