@@ -200,6 +200,9 @@ int main (int argc, char ** argv) {
   memset (counts, 0, numPossibleConfigurations* sizeof(int));
   
   for (int i=0; i<numConfigurations; i++){
+    printf("\n");
+    printf("................................");
+
     for (int j=0; j < numPotentials; j++){
       Potential *p = potentials[j];
       if (p->isFrozen){
@@ -214,6 +217,9 @@ int main (int argc, char ** argv) {
       // Obtain the conditional distribution for the current potential
 
       Potential* potential = p;
+
+      printf("old state %d\n",  p->state);
+
       _conditionalGiven (p, 0, distribution);
 
       printf("got initial distribution\n");
