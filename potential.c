@@ -176,7 +176,7 @@ int main (int argc, char ** argv) {
       _cumulativeDistribution (distribution, cumulative, p->numStates);
 
       int newState = _drawFromCumulative(cumulative, p->numStates);
-
+      p->state = newState;
     }
     
   }
