@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <assert.h>
 #include "potential.h"
 #include "projection.h"
 
@@ -25,6 +26,7 @@ void _initPotential(Potential*p,
     parent->indexInChild[indexOfChildInParent] = iParent;
     parent->numChildren++;
   }
+  p->numConditionals = numConditionals;
   memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
   memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
   memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
@@ -41,6 +43,28 @@ void _initPotential(Potential*p,
   }
 }
   
+void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distribution){
+
+  int numDimensions = potential->numParents + 1;
+  int indices[numDimensions];
+
+  indices[0] = potential->state;
+  for (int iParent=0; iParent < potential->numParents; iParent++){
+    assert (iParent+1 < numDimensions);
+    indices[iParent+1] = potential->parents[iParent]->state;
+  }
+  indices[indexUnfixed] = -1;
+
+  int offsetOut = 0, lengthOut =0, strideOut =0;
+  projection ( potential->dimensions, indices, numDimensions,
+               &offsetOut, &lengthOut, &strideOut);
+
+  for (int iState =0; iState < potential->numStates; iState++){
+    assert (iState * strideOut <  potential->numStates);
+    assert (offsetOut + iState * strideOut < potential->numConditionals);
+    distribution[iState] *= potential->conditionals[offsetOut + iState * strideOut];
+  }
+}
 
 int main (int argc, char ** argv) {
   float conditionals [2 + 4+ 4 + 4 + 8];
@@ -79,19 +103,17 @@ int main (int argc, char ** argv) {
 
   //data: B=n, E=n
   // initial config: ynyyn  (we use y=0, n=1)
-  State sa, sb, sc, sd, se;
-  sa.potential = &a; sa.state = 0;
-  sb.potential = &b; sb.state = 1;
-  sc.potential = &c; sc.state = 0;
-  sd.potential = &d; sd.state = 0;
-  se.potential = &e; se.state = 1;
+
+  a.state = 0;
+  b.state = 1;
+  c.state = 0;
+  d.state = 0;
+  e.state = 1;
 
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
   
 
-  State* states[] = {&sa, &sb, &sc, &sd, &se}; //causal order
- 
   const int numConfigurations = 100;
   for (int i=0; i<numConfigurations; i++){
     for (int j=0; j < numPotentials; j++){
@@ -99,18 +121,13 @@ int main (int argc, char ** argv) {
       float distribution [p->numStates];
       _initDistribution(distribution, p->numStates);
 
-      // Obtain the conditional distribution for the current potential 
-      int indices[p->numDimensions];
-      indices[0] = -1;
-      for (int i=0; i< p->numParents; i++){
-        indices[i+1] = p->state; 
-      }
+      // Obtain the conditional distribution for the current potential
 
+      Potential* potential = p;
+      _conditionalGiven (p, 0, distribution);
 
-      int offsetOut = 0, lengthOut, strideOut;
-      projection ( p->dimensions, indices, p->numDimensions,
-                   &offsetOut, &lengthOut, &strideOut);
-
+      
+      
      
     }
     

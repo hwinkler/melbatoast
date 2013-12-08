@@ -6,6 +6,7 @@
 typedef struct Potential {
   int   numStates;
   float *conditionals;
+  int numConditionals;   // this is here mainly for debugging
   int numParents;
   int numChildren;
   struct Potential* parents[MAX_PARENTS];
