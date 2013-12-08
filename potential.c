@@ -31,8 +31,14 @@ void _initPotential(Potential*p,
   memset (p->indexInChild, 0, sizeof(int) * MAX_CHILDREN);
   memcpy (p->parents,  parents, numParents);
   p->numParents = numParents;
+   
+  int numDimensions = 1 + numParents;
 
-  
+  p->dimensions[0] = numStates;
+  for (int iDim = 1; iDim < numDimensions; iDim++){
+    Potential *parent = p->parents[iDim-1];
+    p->dimensions[iDim] = parent->numStates;
+  }
 }
   
 
@@ -83,17 +89,6 @@ int main (int argc, char ** argv) {
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
   
-  // Each random variable is the first, or most rapidly-varying, 
-  // index within its own potential. We need a lookup table for
-  // each RV telling its index in the potentials in which it participates
-  // as a child or a parent.
-  
-  for (int i=0; i<numPotentials; i++){
-    Potential *p = potentials[i];
-    PotentialRef refs [MAX_CHILDREN];
-    
-    
-  }
 
   State* states[] = {&sa, &sb, &sc, &sd, &se}; //causal order
  
@@ -103,18 +98,19 @@ int main (int argc, char ** argv) {
       Potential *p = potentials[j];
       float distribution [p->numStates];
       _initDistribution(distribution, p->numStates);
-      
-      PotentialRef** potentialsInvolving ;
-      int numPotentialsInvolving;
-      
-      for (int ip =0; ip < numPotentialsInvolving; ip++){
-        int offset=0, length=0, stride = 0;
 
-        PotentialRef* ref = potentialsInvolving[ip];
-        int myIndex = ref->dimensionIndex;
-        Potential * otherPotential = ref->potential;
-        
+      // Obtain the conditional distribution for the current potential 
+      int indices[p->numDimensions];
+      indices[0] = -1;
+      for (int i=0; i< p->numParents; i++){
+        indices[i+1] = p->state; 
       }
+
+
+      int offsetOut = 0, lengthOut, strideOut;
+      projection ( p->dimensions, indices, p->numDimensions,
+                   &offsetOut, &lengthOut, &strideOut);
+
      
     }
     

@@ -10,16 +10,10 @@ typedef struct Potential {
   int numChildren;
   struct Potential* parents[MAX_PARENTS];
   struct Potential* children[MAX_CHILDREN];
-  int indexInParent [MAX_PARENTS];
   int indexInChild [MAX_CHILDREN];
+  int dimensions [MAX_PARENTS + 1];
+
+  int state;  /// TODO remove. This is the only mutable field.
+
 } Potential;
 
-typedef struct State {
-  Potential* potential;
-  int state;
-} State;
-
-typedef struct PotentialRef {
-  Potential* potential;
-  int dimensionIndex;
-} PotentialRef;
