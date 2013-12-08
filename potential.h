@@ -13,10 +13,7 @@ typedef struct Potential {
   struct Potential* children[MAX_CHILDREN];
   int indexInChild [MAX_CHILDREN];
   int dimensions [MAX_PARENTS + 1];
-
-  int state;  /// TODO remove. This is the only mutable field.
-  int isFrozen;
-
+  int isFrozen; 
 } Potential;
 
 extern void initPotential(Potential*p, 

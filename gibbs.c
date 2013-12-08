@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "gibbs.h"
 #include "projection.h"
 
@@ -46,25 +47,28 @@ int _drawFromCumulative (float* cumulative, int n){
   double r =  mt_drand();
   
   for (int i=0; i<n; i++){
-    
+   
     if ( r < cumulative[i]){
       return i;
     }
   }
-  
+  printf("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
   assert (false);
   return 0;
 }
 
-void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distribution){
+void _conditionalGiven(Potential *potentials , int offset, int * states, int indexUnfixed, float* distribution){
+  Potential *potential = potentials + offset;
 
   int numDimensions = potential->numParents + 1;
   int indices[numDimensions];
 
-  indices[0] = potential->state;
+  indices[0] = states[offset];
   for (int iParent=0; iParent < potential->numParents; iParent++){
     assert (iParent+1 < numDimensions);
-    indices[iParent+1] = potential->parents[iParent]->state;
+    Potential *parent = potential->parents[iParent];
+    int parentOffset = parent - potentials;
+    indices[iParent+1] = states[parentOffset];
   }
 
   assert (indexUnfixed < numDimensions);
@@ -81,19 +85,20 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
   }
 }
 
-void gibbs (Potential** potentials, int numPotentials, 
+void gibbs (Potential* potentials, int numPotentials, int *initialStates,
             int counts[], int numCounts, int numIterations) {
   
   mt_seed();
 
+  int* states = malloc (numPotentials * sizeof(int));
+  memcpy (states, initialStates, numPotentials*sizeof(int));
+
   memset (counts, 0, numCounts* sizeof(int));
-  
+    
   for (int i=0; i<numIterations; i++){
     
-    
-
     for (int j=0; j < numPotentials; j++){
-      Potential *p = potentials[j];
+      Potential *p = potentials + j;
       if (p->isFrozen){
         continue;
       }
@@ -106,7 +111,7 @@ void gibbs (Potential** potentials, int numPotentials,
 
       Potential* potential = p;
 
-      _conditionalGiven (p, 0, distribution);     
+      _conditionalGiven (potentials, j, states, 0, distribution);     
       
       // Multiply in the distribution for this variable in each child potential
       for (int iChild =0; iChild < p->numChildren; iChild++){
@@ -114,7 +119,7 @@ void gibbs (Potential** potentials, int numPotentials,
      
         // add one to indexInChild, since the indexInChild refers to zero based
         // among the parents -- but zer oindex is reserved to the potential's variable
-        _conditionalGiven (child, p->indexInChild[iChild] + 1, distribution);
+        _conditionalGiven (potentials, child - potentials, states, p->indexInChild[iChild] + 1, distribution);
         
       }
       
@@ -125,18 +130,19 @@ void gibbs (Potential** potentials, int numPotentials,
 
       int newState = _drawFromCumulative(cumulative, p->numStates);
 
-      p->state = newState;
+      states[j] = newState;
     }
 
     // which configuration is this?
 
     int config = 0;
     for (int j=0; j < numPotentials; j++){
-      config *= potentials[j]->numStates;
-      config += potentials[j]->state;
+      config *= potentials[j].numStates;
+      config += states[j];
     }
     
     counts[config] ++;
   }
+  free (states);
 
 }
