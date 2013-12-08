@@ -1,5 +1,5 @@
 CC=c99
-CFLAGS=-g  
+CFLAGS=-O2  
 
 all: tests 
 

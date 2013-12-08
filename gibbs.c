@@ -78,20 +78,9 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
   
   for (int iState =0; iState < potential->numStates; iState++){
     assert (offsetOut + iState * strideOut < potential->numConditionals);
-    distribution[iState] *= potential->conditionals[offsetOut + iState * strideOut];
-
-    
+    distribution[iState] *= potential->conditionals[offsetOut + iState * strideOut]; 
   }
-  
 }
-
-void _printArray(float * f, int n){
-  for (int i=0; i<n; i++){
-    
-  }
-  
-}
-
 
 void gibbs (Potential** potentials, int numPotentials, 
             int counts[], int numCounts, int numIterations) {
@@ -118,9 +107,7 @@ void gibbs (Potential** potentials, int numPotentials,
 
       Potential* potential = p;
 
-      _conditionalGiven (p, 0, distribution);
-
-      
+      _conditionalGiven (p, 0, distribution);     
       
       // Multiply in the distribution for this variable in each child potential
       for (int iChild =0; iChild < p->numChildren; iChild++){
@@ -130,13 +117,10 @@ void gibbs (Potential** potentials, int numPotentials,
         // among the parents -- but zer oindex is reserved to the potential's variable
         _conditionalGiven (child, p->indexInChild[iChild] + 1, distribution);
         
-        _printArray(distribution, p->numStates);
       }
       
       _normalizeDistribution (distribution, p->numStates);
       
-      _printArray(distribution, p->numStates);
-
       float cumulative [p->numStates];
       _cumulativeDistribution (distribution, cumulative, p->numStates);
 
