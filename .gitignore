@@ -1,4 +1,5 @@
 a.out
 **/*.o
-projection
-potential
+**/.DS_Store
+tests/jensen
+tests/projection
