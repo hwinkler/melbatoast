@@ -48,11 +48,11 @@ int _drawFromCumulative (float* cumulative, int n){
   
   for (int i=0; i<n; i++){
    
-    if ( r < cumulative[i]){
+    if ( r <= cumulative[i]){
       return i;
     }
   }
-  printf("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
+  DPRINT("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
   assert (false);
   return 0;
 }
