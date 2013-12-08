@@ -2,10 +2,12 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
-#include <stdlib.h>
+#include <stdio.h>
 
 #include "potential.h"
 #include "projection.h"
+
+#define DPRINTF printf
 
 // TODO: including mtwist.h caused duplicate defs in the linker
 extern double mt_drand();
@@ -64,10 +66,13 @@ void _initPotential(Potential*p,
     parent->numChildren++;
   }
   p->numConditionals = numConditionals;
-  memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
+
+  memset (p->conditionals, 0, sizeof(float) * MAX_TABLE);
   memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
   memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
   memset (p->indexInChild, 0, sizeof(int) * MAX_CHILDREN);
+
+  memcpy (p->conditionals, conditionals, numConditionals * sizeof(float));
   memcpy (p->parents,  parents, numParents);
   p->numParents = numParents;
    
@@ -103,28 +108,37 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
   }
 }
 
+
 int main (int argc, char ** argv) {
+  printf("starting\n");
+
   mt_seed();
 
-  float conditionals [2 + 4+ 4 + 4 + 8];
+
   Potential a,b,c,d,e;
 
+  printf("Initializing potentials\n");
   // P(A)
 
   _initPotential (&a, 2, (float []){0.4f, 0.6f}, 
                   (Potential *[]) {NULL}, 0 );
 
+  printf("P(A)\n");
+ 
   // P(B|A)
   _initPotential (&b, 2, (float []){0.3f, 0.7f, 0.8f, 0.2f}, 
                   (Potential *[]) {&a}, 1 );
+  printf("P(B|A)\n");
 
   // P(C|A)
   _initPotential (&c, 2, (float []){0.7f, 0.3f, 0.4f, 0.6f}, 
                   (Potential *[]) {&a}, 1 );
- 
+   printf("P(C|A)\n");
+
   // P(D|B)
   _initPotential (&d, 2, (float []){0.5f, 0.5f, 0.1f, 0.9f}, 
                   (Potential *[]) {&b}, 1 );
+  printf("P(D|B)\n");
 
   // P(E|D,C)
   _initPotential (&e, 2, (float []){
@@ -138,7 +152,7 @@ int main (int argc, char ** argv) {
         0.001f
         },
     (Potential *[]) {&d, &c}, 1 );
-
+  printf("P(E|D,C)\n");
 
   //data: B=n, E=n
   // initial config: ynyyn  (we use y=0, n=1)
@@ -160,22 +174,33 @@ int main (int argc, char ** argv) {
       float distribution [p->numStates];
       _initDistribution(distribution, p->numStates);
 
+      printf("i=%d, j=%d\n", i, j);
+
       // Obtain the conditional distribution for the current potential
 
       Potential* potential = p;
       _conditionalGiven (p, 0, distribution);
+
+      printf("got initial distribution\n");
       
       // Multiply in the distribution for this variable in each child potential
       for (int iChild =0; iChild < p->numChildren; iChild++){
         Potential * child = p->children[iChild];
         _conditionalGiven (child, p->indexInChild[iChild], distribution);
+        printf("got  distribution for child %d\n", iChild);
       }
       
       _normalizeDistribution (distribution, p->numStates);
+      printf("normalized  distribution \n");
+
       float cumulative [p->numStates];
       _cumulativeDistribution (distribution, cumulative, p->numStates);
+      printf("cululative  distribution \n");
 
       int newState = _drawFromCumulative(cumulative, p->numStates);
+
+      printf("new state %d\n", newState);
+
       p->state = newState;
     }
     
