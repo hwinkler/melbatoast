@@ -57,8 +57,8 @@ int _drawFromCumulative (float* cumulative, int n){
   return 0;
 }
 
-void _conditionalGiven(Potential *potentials , int offset, int * states, int indexUnfixed, float* distribution){
-  Potential *potential = potentials + offset;
+void _conditionalGiven(const Potential *const potentials , int offset, const int * const states, int indexUnfixed, float* distribution){
+  const Potential *const potential = potentials + offset;
 
   int numDimensions = potential->numParents + 1;
   int indices[numDimensions];
@@ -85,7 +85,7 @@ void _conditionalGiven(Potential *potentials , int offset, int * states, int ind
   }
 }
 
-void gibbs (Potential* potentials, int numPotentials, int *initialStates,
+void gibbs (const Potential* const potentials, int numPotentials, const int *const initialStates,
             int counts[], int numCounts, int numIterations) {
   
   mt_seed();
@@ -98,7 +98,7 @@ void gibbs (Potential* potentials, int numPotentials, int *initialStates,
   for (int i=0; i<numIterations; i++){
     
     for (int j=0; j < numPotentials; j++){
-      Potential *p = potentials + j;
+      const Potential *const p = potentials + j;
       if (p->isFrozen){
         continue;
       }
@@ -109,7 +109,7 @@ void gibbs (Potential* potentials, int numPotentials, int *initialStates,
      
       // Obtain the conditional distribution for the current potential
 
-      Potential* potential = p;
+      const Potential* const potential = p;
 
       _conditionalGiven (potentials, j, states, 0, distribution);     
       
