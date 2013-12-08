@@ -7,7 +7,10 @@
 #include "potential.h"
 #include "projection.h"
 
-#define DPRINTF printf
+#define DEBUG 0
+#define DPRINT(...) \
+           do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
+
 
 // TODO: including mtwist.h caused duplicate defs in the linker
 extern double mt_drand();
@@ -39,9 +42,9 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
 
 int _drawFromCumulative (float* cumulative, int n){
   double r =  mt_drand();
-  printf ("rand = %f, n = %d\n", r, n);
+  DPRINT ("rand = %f, n = %d\n", r, n);
   for (int i=0; i<n; i++){
-    printf("cumulative[%d] = %f\n", i, cumulative[i]);
+    DPRINT("cumulative[%d] = %f\n", i, cumulative[i]);
     if ( r < cumulative[i]){
       return i;
     }
@@ -77,12 +80,12 @@ void _initPotential(Potential*p,
   memcpy (p->parents,  parents, numParents * sizeof(Potential*));
   p->numParents = numParents;
    
-  printf("initialized all but dimensions\n");
+  DPRINT("initialized all but dimensions\n");
   int numDimensions = 1 + numParents;
   p->dimensions[0] = numStates;
   for (int iDim = 1; iDim < numDimensions; iDim++){
     Potential *parent = p->parents[iDim-1];
-    printf("setting dim %d  = %d\n", iDim, parent->numStates);
+    DPRINT("setting dim %d  = %d\n", iDim, parent->numStates);
     p->dimensions[iDim] = parent->numStates;
   }
   p->state =0;
@@ -107,26 +110,26 @@ void _conditionalGiven(Potential *potential ,int indexUnfixed, float* distributi
   projection ( potential->dimensions, indices, numDimensions,
                &offsetOut, &lengthOut, &strideOut);
   assert (lengthOut == potential->numStates);
-  printf("conditionalGiven unfixed %d [", indexUnfixed );
+  DPRINT("conditionalGiven unfixed %d [", indexUnfixed );
   for (int iState =0; iState < potential->numStates; iState++){
     assert (offsetOut + iState * strideOut < potential->numConditionals);
     distribution[iState] *= potential->conditionals[offsetOut + iState * strideOut];
 
-    printf("%6.4f ",  potential->conditionals[offsetOut + iState * strideOut]);
+    DPRINT("%6.4f ",  potential->conditionals[offsetOut + iState * strideOut]);
   }
-  printf("]\n");
+  DPRINT("]\n");
 }
 
 void _printArray(float * f, int n){
   for (int i=0; i<n; i++){
-    printf("%6.4f ", f[i]);
+    DPRINT("%6.4f ", f[i]);
   }
-  printf("\n");
+  DPRINT("\n");
 }
 
 
 int main (int argc, char ** argv) {
-  printf("starting\n");
+  DPRINT("starting\n");
 
   mt_seed();
 
@@ -134,7 +137,7 @@ int main (int argc, char ** argv) {
   float conditionals[numConditionals];
   Potential a,b,c,d,e;
 
-  printf("Initializing potentials\n");
+  DPRINT("Initializing potentials\n");
 
   float *ca = conditionals+ 0;
   memcpy (ca,( (float []){0.4f, 0.6f}), 2 * sizeof(float));
@@ -154,27 +157,27 @@ int main (int argc, char ** argv) {
   _initPotential (&a, 2, ca, 
                   (Potential *[]) {NULL}, 0 );
 
-  printf("P(A)\n");
+  DPRINT("P(A)\n");
  
   // P(B|A)
   _initPotential (&b, 2, cb, 
                   (Potential *[]) {&a}, 1 );
-  printf("P(B|A)\n");
+  DPRINT("P(B|A)\n");
 
   // P(C|A)
   _initPotential (&c, 2, cc, 
                   (Potential *[]) {&a}, 1 );
-   printf("P(C|A)\n");
+   DPRINT("P(C|A)\n");
 
   // P(D|B)
   _initPotential (&d, 2, cd, 
                   (Potential *[]) {&b}, 1 );
-  printf("P(D|B)\n");
+  DPRINT("P(D|B)\n");
 
   // P(E|D,C)
   _initPotential (&e, 2, ce,
     (Potential *[]) {&d, &c}, 2 );
-  printf("P(E|D,C)\n");
+  DPRINT("P(E|D,C)\n");
 
   //data: B=n, E=n
   // initial config: ynyyn  (we use y=0, n=1)
@@ -184,7 +187,7 @@ int main (int argc, char ** argv) {
   c.state = 0;
   d.state = 0;
   e.state = 1;
-  //b.isFrozen = e.isFrozen = true;
+  b.isFrozen = e.isFrozen = true;
 
   Potential* potentials[] = {&a, &b, &c, &d, &e}; //causal order
   const int numPotentials = 5;
@@ -200,8 +203,8 @@ int main (int argc, char ** argv) {
   memset (counts, 0, numPossibleConfigurations* sizeof(int));
   
   for (int i=0; i<numConfigurations; i++){
-    printf("\n");
-    printf("................................");
+    DPRINT("\n");
+    DPRINT("................................");
 
     for (int j=0; j < numPotentials; j++){
       Potential *p = potentials[j];
@@ -211,18 +214,18 @@ int main (int argc, char ** argv) {
       float distribution [p->numStates];
       _initDistribution(distribution, p->numStates);
 
-      printf("\n");
-      printf("config #=%d, potential=%d\n", i, j);
+      DPRINT("\n");
+      DPRINT("config #=%d, potential=%d\n", i, j);
 
       // Obtain the conditional distribution for the current potential
 
       Potential* potential = p;
 
-      printf("old state %d\n",  p->state);
+      DPRINT("old state %d\n",  p->state);
 
       _conditionalGiven (p, 0, distribution);
 
-      printf("got initial distribution\n");
+      DPRINT("got initial distribution\n");
       
       // Multiply in the distribution for this variable in each child potential
       for (int iChild =0; iChild < p->numChildren; iChild++){
@@ -230,12 +233,12 @@ int main (int argc, char ** argv) {
         // add one to indexInChild, since the indexInChild refers to zero based
         // among the parents -- but zer oindex is reserved to the potential's variable
         _conditionalGiven (child, p->indexInChild[iChild] + 1, distribution);
-        printf("got  distribution for child %d\n", iChild);
+        DPRINT("got  distribution for child %d\n", iChild);
         _printArray(distribution, p->numStates);
       }
       
       _normalizeDistribution (distribution, p->numStates);
-      printf("normalized  distribution \n");
+      DPRINT("normalized  distribution \n");
       _printArray(distribution, p->numStates);
 
       float cumulative [p->numStates];
@@ -243,7 +246,7 @@ int main (int argc, char ** argv) {
 
       int newState = _drawFromCumulative(cumulative, p->numStates);
 
-      printf("new state %d\n", newState);
+      DPRINT("new state %d\n", newState);
 
       p->state = newState;
     }
