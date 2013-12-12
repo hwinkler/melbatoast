@@ -9,6 +9,7 @@
 /// dimensional projection.
 ///
 
+__device__
 void projection (
                  const int *const dimensions,   /// Array of the lengths of each dimension.
                  const int *const indices,      /// Array of fixed indices for each dimension.
