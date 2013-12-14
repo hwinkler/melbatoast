@@ -39,6 +39,8 @@ int main (int argc, char ** argv){
   // P(A)
   initPotential<<<1, 1>>> (da, numStates[0], dca, 
                   (Potential *[]) {NULL}, 0 );
+
+
   // P(B|A)
   initPotential<<<1, 1>>> (db, numStates[1], dcb, 
                   (Potential *[]) {da}, 1 );
@@ -54,8 +56,9 @@ int main (int argc, char ** argv){
   
   
   for (int i=0; i< numPotentials; i++){
-    printf ("Potential %c %p:\n", 'A' + i, devPotentials+i);
-    printDevicePotential(devPotentials+i);
+    Potential* p = da + i;
+    printf ("Potential %c %p:\n", 'A' + i, p);
+    printDevicePotential(p);
   }
 
   //data: B=n, E=n

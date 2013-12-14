@@ -10,15 +10,15 @@ build: jensenDevLib.a jensen
 
 jensen: jensen.o potential.o jensenLink.o jensenDevLib.a
 	nvcc -o $@ $+ $(LIBRARIES)
-jensen.o: jensen.cu gibbs.h
+jensen.o: jensen.cu gibbs.h potential.h cudacall.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-gibbs.o: gibbs.cu gibbs.h projection.h
+gibbs.o: gibbs.cu gibbs.h projection.h potential.h rnd.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-projection.o: projection.cu
+projection.o: projection.cu projection.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-rnd.o: rnd.cu
+rnd.o: rnd.cu rnd.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-potential.o: potential.cu
+potential.o: potential.cu potential.h cudacall.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
 jensenDevLib.a: gibbs.o projection.o rnd.o
 	nvcc -lib -o $@  gibbs.o projection.o rnd.o
