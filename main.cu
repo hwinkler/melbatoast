@@ -253,6 +253,12 @@ void initPotential(Potential*p,
   p->isFrozen = false;
 }
 
+int freezeDevicePotential(Potential *pd, int frozen){
+  int offset = (char *) &pd->isFrozen - (char*)pd;
+  CUDA_CALL(cudaMemcpy ( pd + offset,  &frozen, sizeof(pd->isFrozen), cudaMemcpyHostToDevice));
+  return 0;
+}
+
 int printDevicePotential (Potential*pd) {
   Potential p;  
   CUDA_CALL(cudaMemcpy ( &p,  pd, sizeof(p), cudaMemcpyDeviceToHost));
@@ -384,6 +390,8 @@ int main (int argc, char ** argv){
  
  
   // b->isFrozen = e->isFrozen = true;
+  freezeDevicePotential(db, 1);
+  freezeDevicePotential(de, 1);
   
   int numConfigurations = 1;
   for (int i=0; i< numPotentials; i++){
