@@ -1,7 +1,7 @@
 CC=nvcc
 CFLAGS=
 
-GENCODE_FLAGS   := -arch=sm_35
+GENCODE_FLAGS   := -arch=sm_20
 
 
 all: build
