@@ -216,7 +216,7 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
     counts[config] ++;
   }
 
-  int * gCounts = countsBase + blockIdx.x * numCounts;
+  int * gCounts = countsBase ;//+ blockIdx.x * numCounts;
   for (int i=0; i<numCounts; i++){
     atomicAdd(gCounts+i, counts[i]);
   }
@@ -418,17 +418,17 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaMemcpy (devStates, states, numPotentials* sizeof(int), cudaMemcpyHostToDevice));
 
   int * devCounts ;
-  CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* N * sizeof(int)));
-  CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations* N * sizeof(int)));
+  CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
+  CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations*   sizeof(int)));
 
   gibbs<<<N,M>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
 
-  int counts[numConfigurations * N];
-  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations* N * sizeof(int), cudaMemcpyDeviceToHost));
+  int counts[numConfigurations];
+  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
 
   for (int j=0; j < numConfigurations; j++){
       printf("%4d: ", j);
-    for (int n =0; n< N; n++){
+    for (int n =0; n< 1; n++){
       printf("%6d", counts[j + n * numConfigurations ]);
     }
     printf("\n");
