@@ -47,7 +47,7 @@ int printDevicePotential (Potential*pd) {
 
   printf("%17s %6d\n",  "numStates", p.numStates);
 
-  if (p.numConditionals >=0 & p.numConditionals < 1000){
+  if (p.numConditionals >=0 && p.numConditionals < 1000){
     float conditionals[p.numConditionals];
     CUDA_CALL(cudaMemcpy ( conditionals,  p.conditionals, p.numConditionals, cudaMemcpyDeviceToHost));
     for (int i=0; i< p.numConditionals; i++){

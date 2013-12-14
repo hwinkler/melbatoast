@@ -54,6 +54,7 @@ int main (int argc, char ** argv){
   
   
   for (int i=0; i< numPotentials; i++){
+    printf ("Potential %c %p:\n", 'A' + i, devPotentials+i);
     printDevicePotential(devPotentials+i);
   }
 
