@@ -1,23 +1,11 @@
-CC=nvcc
-CFLAGS=
-
-GENCODE_FLAGS   := -arch=sm_35
 
 
 all: build
 
-build: jensenDevLib.a jensen
+build: main
 
-jensen: jensen.o potential.o jensenLink.o jensenDevLib.a
-	nvcc -o $@ $+ $(LIBRARIES)
-jensen.o: jensen.cu potential.h cudacall.h
-	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-potential.o: potential.cu potential.h 
-	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-jensenDevLib.a:potential.o
-	nvcc -lib -o $@ potential.o
-jensenLink.o: jensen.o jensenDevLib.a
-	nvcc -dlink $(GENCODE_FLAGS) -o $@ $^
+main: main.cu add.cu
+	nvcc -arch=sm_30 -o $@ $+ $(LIBRARIES)
 
 clean:
-	rm -f      *.a   *.o  tests/*.o jensen
+	rm -f   main   *.a   *.o  tests/*.o 

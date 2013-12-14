@@ -1,13 +1,15 @@
 #include <stdio.h>
-#include <string.h>
 
 #include <cuda.h>
+#if defined(ONEFILE)
+__global__ void add(int *a, int *b, int *c) { 
+  *c = *a + *b;
+}
+#else
 
-#include "cudacall.h"
+__global__  void add(int *a, int *b, int *c);
+#endif
 
-
-
-  __global__ void add(int *a, int *b, int *c);
 int main(void) {
 
   int a, b, c; // host copies of a, b, c 
