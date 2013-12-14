@@ -3,4 +3,5 @@ a.out
 **/*.a
 **/.DS_Store
 jensen
+main
 tests/projection

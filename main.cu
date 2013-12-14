@@ -9,9 +9,6 @@
 #include <curand_kernel.h>
 
 
-#include "gibbs.h"
-#include "projection.h"
-#include "rnd.h"
 #include "potential.h"
 #include "cudacall.h"
 
@@ -29,6 +26,56 @@
 
 #define MAX_DIMENSIONS 10
 #define MAX_STATES 10
+
+
+__device__ double rnd(curandState* state) {
+  return curand_uniform( state );
+}
+
+__device__ void rndSeed ( curandState * state){
+  unsigned int seed = (unsigned int) clock();
+  int id = threadIdx.x + blockIdx.x * blockDim.x;
+  curand_init ( seed, id, 0, &state[id] );
+} 
+
+
+__device__
+void projection (
+                 const int *const dimensions,
+                 const int *const indices,
+                 int numDimensions,
+                 int *offsetOut,
+                 int *lengthOut,
+                 int *strideOut) {
+
+  // the first dimension varies fastest
+  // index -1 indicates the dimension we are extracting
+
+  int hypersheetSize = 1;
+  int stride = -1;
+  int index0 = 0;
+  int length = -1;
+  
+  for (int i =0; i < numDimensions ; i++){
+
+    int index;
+    if (indices[i] < 0){
+      index = 0;
+      stride = hypersheetSize;
+      length = dimensions[i];
+    } else {
+      index = indices[i];
+    }
+    index0 += hypersheetSize * index;
+    hypersheetSize *= dimensions[i];
+  }
+
+  *offsetOut = index0;
+  *lengthOut = length;
+  *strideOut = stride;
+
+}
+
 
 __device__
 void _initDistribution (float* distribution, int n){
@@ -253,54 +300,6 @@ int printDevicePotential (Potential*pd) {
   return 0;
 }
 
-
-__device__
-void projection (
-                 const int *const dimensions,
-                 const int *const indices,
-                 int numDimensions,
-                 int *offsetOut,
-                 int *lengthOut,
-                 int *strideOut) {
-
-  // the first dimension varies fastest
-  // index -1 indicates the dimension we are extracting
-
-  int hypersheetSize = 1;
-  int stride = -1;
-  int index0 = 0;
-  int length = -1;
-  
-  for (int i =0; i < numDimensions ; i++){
-
-    int index;
-    if (indices[i] < 0){
-      index = 0;
-      stride = hypersheetSize;
-      length = dimensions[i];
-    } else {
-      index = indices[i];
-    }
-    index0 += hypersheetSize * index;
-    hypersheetSize *= dimensions[i];
-  }
-
-  *offsetOut = index0;
-  *lengthOut = length;
-  *strideOut = stride;
-
-}
-
-
-__device__ double rnd(curandState* state) {
-  return curand_uniform( state );
-}
-
-__device__ void rndSeed ( curandState * state){
-  unsigned int seed = (unsigned int) clock();
-  int id = threadIdx.x + blockIdx.x * blockDim.x;
-  curand_init ( seed, id, 0, &state[id] );
-} 
 
 
 int main (int argc, char ** argv){
