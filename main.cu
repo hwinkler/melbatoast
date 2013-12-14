@@ -26,6 +26,7 @@
 
 #define MAX_DIMENSIONS 10
 #define MAX_STATES 10
+#define MAX_POTENTIALS 100
 
 
 __device__ double rnd(curandState* state) {
@@ -156,9 +157,12 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
   curandState rndState;
   rndSeed(&rndState);
 
-  int* states = (int*) malloc (numPotentials * sizeof(int));
+  if (numPotentials > MAX_POTENTIALS){
+    return;
+  }
+  int states[MAX_POTENTIALS]; 
   memcpy (states, initialStates, numPotentials*sizeof(int));
-
+  
   int * counts = countsBase + blockIdx.x * numCounts;
   memset ( counts, 0, numCounts* sizeof(int));
     
@@ -169,6 +173,7 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
       if (p->isFrozen){
         continue;
       }
+      
       float distribution [MAX_STATES];
       _initDistribution(distribution, p->numStates);
 
@@ -207,7 +212,7 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
     
     counts[config] ++;
   }
-  free (states);
+
 
 }
 
@@ -420,5 +425,12 @@ int main (int argc, char ** argv){
     }
     printf("\n");
   }
+
+  CUDA_CALL(cudaFree (devPotentials));
+  CUDA_CALL(cudaFree (devConditionals));
+  CUDA_CALL(cudaFree (devParents));
+  CUDA_CALL(cudaFree (devStates));
+  CUDA_CALL(cudaFree (devCounts));
+  CUDA_CALL(cudaFree (devPotentials));
 
 }
