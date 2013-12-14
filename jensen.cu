@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <cuda.h>
-#include <curand_kernel.h>
 #include "potential.h"
 #include "gibbs.h"
 
@@ -12,16 +11,10 @@
     return EXIT_FAILURE;}} while(0)
 
 
- __global__ void setup_rnd_kernel ( curandState * state, unsigned long seed );
-
 int main (int argc, char ** argv){
 
   int N = 1;
-  curandState* rndStates;
-  CUDA_CALL(cudaMalloc ( (void**) &rndStates, N*sizeof( curandState ) ));
 
-  setup_rnd_kernel <<< 1, N >>> ( rndStates, time(NULL) );
- 
   const int numPotentials = 5;
   Potential* devPotentials;
   CUDA_CALL(cudaMalloc ( (void**) &devPotentials, numPotentials *sizeof( Potential ) ));
@@ -45,7 +38,7 @@ int main (int argc, char ** argv){
   float *devConditionals;
   CUDA_CALL(cudaMalloc ( (void**) &devConditionals, numConditionals * sizeof( float ) ));
   CUDA_CALL(cudaMemcpy (devConditionals, conditionals, numConditionals* sizeof(float), cudaMemcpyHostToDevice));
-  float *dca = devConditionals+0, *dcb = da + 2, *dcc = db +4, *dcd = dc + 4, *dce = dd + 4;
+  float *dca = devConditionals+0, *dcb = dca + 2, *dcc = dcb +4, *dcd = dcc + 4, *dce = dcd + 4;
 
   const int numStates[numPotentials] = {2,2,2,2,2};
   // P(A)
@@ -83,14 +76,14 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaMemcpy (devStates, states, numPotentials* sizeof(int), cudaMemcpyHostToDevice));
 
   int * devCounts ;
-  CUDA_CALL(cudaMalloc( (void**) &devCounts, numPossibleConfigurations* sizeof(int)));
-  CUDA_CALL(cudaMemcpy (devCounts, counts, numPossibleConfigurations* sizeof(int), cudaMemcpyHostToDevice));
+  CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
+  CUDA_CALL(cudaMemcpy (devCounts, counts, numConfigurations* sizeof(int), cudaMemcpyHostToDevice));
 
-  gibbs<<<1,N>>>(devPotentials, numPotentials, devStates, rndStates, devCounts, numConfigurations, 100);
+  gibbs<<<1,N>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
 
-  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numPossibleConfigurations* sizeof(int), cudaMemcpyDeviceToHost));
+  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations* sizeof(int), cudaMemcpyDeviceToHost));
 
-  for (int j=0; j < numPossibleConfigurations; j++){
+  for (int j=0; j < numConfigurations; j++){
     printf("%4d: %4d\n", j, counts[j]);
   }
 

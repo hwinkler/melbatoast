@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "gibbs.h"
 #include "projection.h"
+#include "rnd.h"
 
 
 
@@ -19,12 +20,6 @@
 
 #define MAX_DIMENSIONS 10
 #define MAX_STATES 10
-
-// TODO: including mtwist.h caused duplicate defs in the linker
-__device__
-extern double mt_drand();
-__device__
-extern void mt_seed(int);
 
 __device__
 void _initDistribution (float* distribution, int n){
@@ -55,8 +50,8 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
 }
 
 __device__
-int _drawFromCumulative (float* cumulative, int n){
-  double r =  mt_drand();
+int _drawFromCumulative (float* cumulative, int n, curandState* rndState){
+  double r =  rnd(rndState);
   
   for (int i=0; i<n; i++){
    
@@ -99,11 +94,11 @@ void _conditionalGiven(const Potential *const potentials , int offset, const int
   }
 }
 
-__device__
+__global__
 void gibbs (const Potential* const potentials, int numPotentials, const int *const initialStates,
-            int counts[], int numCounts, int numIterations, int seeds[]) {
-  
-  mt_seed(seeds[blockIdx.x]);
+            int counts[], int numCounts, int numIterations) {
+  curandState rndState;
+  rndSeed(&rndState);
 
   int* states = (int*) malloc (numPotentials * sizeof(int));
   memcpy (states, initialStates, numPotentials*sizeof(int));
@@ -140,7 +135,7 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
       float cumulative [MAX_STATES];
       _cumulativeDistribution (distribution, cumulative, p->numStates);
 
-      int newState = _drawFromCumulative(cumulative, p->numStates);
+      int newState = _drawFromCumulative(cumulative, p->numStates, &rndState);
 
       states[j] = newState;
     }

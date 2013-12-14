@@ -16,7 +16,7 @@ typedef struct Potential {
   int isFrozen; 
 } Potential;
 
-__device__
+__global__
 extern void initPotential(Potential*p, 
                     int numStates,
                     float* conditionals,
