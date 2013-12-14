@@ -27,6 +27,8 @@
 #define MAX_DIMENSIONS 10
 #define MAX_STATES 10
 #define MAX_POTENTIALS 100
+#define MAX_CONFIGURATIONS 1000
+
 
 
 __device__ double rnd(curandState* state) {
@@ -163,7 +165,8 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
   int states[MAX_POTENTIALS]; 
   memcpy (states, initialStates, numPotentials*sizeof(int));
   
-  int * counts = countsBase + blockIdx.x * numCounts;
+  // int * counts = countsBase + blockIdx.x * numCounts;
+  int counts[MAX_CONFIGURATIONS];
   memset ( counts, 0, numCounts* sizeof(int));
     
   for (int i=0; i<numIterations; i++){
@@ -213,6 +216,10 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
     counts[config] ++;
   }
 
+  int * gCounts = countsBase + blockIdx.x * numCounts;
+  for (int i=0; i<numCounts; i++){
+    atomicAdd(gCounts+i, counts[i]);
+  }
 
 }
 
@@ -320,6 +327,7 @@ int printDevicePotential (Potential*pd) {
 int main (int argc, char ** argv){
 
   const int N = 10;
+  const int M = 100;
 
   const int numPotentials = 5;
   Potential* devPotentials;
@@ -413,7 +421,7 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* N * sizeof(int)));
   CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations* N * sizeof(int)));
 
-  gibbs<<<N,1>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
+  gibbs<<<N,M>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
 
   int counts[numConfigurations * N];
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations* N * sizeof(int), cudaMemcpyDeviceToHost));
