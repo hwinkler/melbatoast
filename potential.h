@@ -3,7 +3,7 @@
 #define MAX_PARENTS 5
 #define MAX_CHILDREN 5
 
-typedef struct Potential {
+typedef struct __align__(8) Potential {
   int   numStates;
   float *conditionals;
   int numConditionals;   // this is here mainly for debugging

@@ -179,15 +179,20 @@ void initPotential(Potential*p,
     parent->indexInChild[indexOfChildInParent] = iParent;
     parent->numChildren++;
   }
+
+
   p->numConditionals = numConditionals;
   p->conditionals = conditionals;
+
   memset (p->parents, 0, sizeof(Potential*) * MAX_PARENTS);
   memset (p->children, 0, sizeof(Potential*) * MAX_CHILDREN);
   memset (p->indexInChild, 0, sizeof(int) * MAX_CHILDREN);
 
-  memcpy (p->parents,  parents, numParents * sizeof(Potential*));
   p->numParents = numParents;
-   
+  p->numChildren = 0;
+  if (numParents > 0){
+    memcpy (p->parents,  parents, numParents * sizeof(Potential*));
+  } 
   
   int numDimensions = 1 + numParents;
   p->dimensions[0] = numStates;
@@ -206,11 +211,14 @@ int printDevicePotential (Potential*pd) {
   printf("%17s %6d\n",  "numStates", p.numStates);
 
   if (p.numConditionals >=0 && p.numConditionals < 1000){
-    float conditionals[p.numConditionals];
-    CUDA_CALL(cudaMemcpy ( conditionals,  p.conditionals, p.numConditionals, cudaMemcpyDeviceToHost));
+
+    float *conditionals = (float*) malloc(p.numConditionals * sizeof(float));
+    CUDA_CALL(cudaMemcpy ( conditionals,  p.conditionals, p.numConditionals * sizeof(p.conditionals[0]), cudaMemcpyDeviceToHost));
+
     for (int i=0; i< p.numConditionals; i++){
-      printf("%11s[%3d] %6.3f\n",  "conditionals", i,  p.conditionals[i]);
+      printf("%11s[%3d] %6.3f\n",  "conditionals", i,  conditionals[i]);
     }
+    free(conditionals);
   }
   printf("%17s %6d\n",  "numConditionals", p.numConditionals);
   printf("%17s %6d\n",  "numParents", p.numParents);
@@ -320,14 +328,17 @@ int main (int argc, char ** argv){
   float *devConditionals;
   CUDA_CALL(cudaMalloc ( (void**) &devConditionals, numConditionals * sizeof( float ) ));
   CUDA_CALL(cudaMemcpy (devConditionals, conditionals, numConditionals* sizeof(float), cudaMemcpyHostToDevice));
-  float *dca = devConditionals+0, *dcb = dca + 2, *dcc = dcb +4, *dcd = dcc + 4, *dce = dcd + 4;
+  float *dca = devConditionals, *dcb = dca + 2, *dcc = dcb +4, *dcd = dcc + 4, *dce = dcd + 4;
+
+  printf("devConditionals = %p\n", devConditionals);
 
   const int numStates[numPotentials] = {2,2,2,2,2};
   // P(A)
   initPotential<<<1, 1>>> (da, numStates[0], dca, 
-                  (Potential *[]) {NULL}, 0 );
+                  (Potential *[]) {}, 0 );
 
-
+  printDevicePotential(da);
+  return 0;
   // P(B|A)
   initPotential<<<1, 1>>> (db, numStates[1], dcb, 
                   (Potential *[]) {da}, 1 );
