@@ -314,7 +314,7 @@ int printDevicePotential (Potential*pd) {
 
 int main (int argc, char ** argv){
 
-  int N = 1;
+  const int N = 1;
 
   const int numPotentials = 5;
   Potential* devPotentials;
@@ -352,7 +352,6 @@ int main (int argc, char ** argv){
   
   initPotential<<<1, 1>>> (da, numStates[0], dca, 
                   devParents, 0 );
-  printDevicePotential(da);
 
   // P(B|A)
   parents[0] = da;
@@ -360,41 +359,40 @@ int main (int argc, char ** argv){
   
   initPotential<<<1, 1>>> (db, numStates[1], dcb, 
                  devParents, 1 );
-  printDevicePotential(db);
-
-
 
   // P(C|A)
   parents[0] = da;
   CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
   initPotential<<<1, 1>>> (dc, numStates[2], dcc, 
                  devParents, 1 );
-  printDevicePotential(dc);
+
   // P(D|B)
   parents[0] = db;
   CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
   initPotential<<<1, 1>>> (dd, numStates[3], dcd, 
                  devParents, 1 );
-  printDevicePotential(dd);
+
   // P(E|D,C)
   parents[0] = dd;
   parents[1] = dc;
   CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
   initPotential<<<1, 1>>> (de, numStates[4], dce,
                   devParents, 2 );
-  printDevicePotential(de);
-  
+
+
+
+
+  //data: B=n, E=n
+
+  freezeDevicePotential(db, 1);
+  freezeDevicePotential(de, 1);
+    
   for (int i=0; i< numPotentials; i++){
     Potential* p = da + i;
     printf ("Potential %c %p:\n", 'A' + i, p);
     printDevicePotential(p);
   }
 
-  //data: B=n, E=n
-
-  freezeDevicePotential(db, 1);
-  freezeDevicePotential(de, 1);
-  
   int numConfigurations = 1;
   for (int i=0; i< numPotentials; i++){
     numConfigurations *= numStates[i];
@@ -406,20 +404,19 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaMalloc((void**)&devStates,  numPotentials* sizeof(int)));
   CUDA_CALL(cudaMemcpy (devStates, states, numPotentials* sizeof(int), cudaMemcpyHostToDevice));
 
-  int counts[numConfigurations * N];
-  memset (counts, 0, numConfigurations * N * sizeof(int));
   int * devCounts ;
   CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* N * sizeof(int)));
-  CUDA_CALL(cudaMemcpy (devCounts, counts, numConfigurations* N * sizeof(int), cudaMemcpyHostToDevice));
+  CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations* N * sizeof(int)));
 
-  gibbs<<<1,N>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
+  gibbs<<<N,1>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
 
+  int counts[numConfigurations * N];
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations* N * sizeof(int), cudaMemcpyDeviceToHost));
 
   for (int j=0; j < numConfigurations; j++){
       printf("%4d: ", j);
     for (int n =0; n< N; n++){
-      printf("%6d", counts[j + N * numConfigurations ]);
+      printf("%6d", counts[j + n * numConfigurations ]);
     }
     printf("\n");
   }
