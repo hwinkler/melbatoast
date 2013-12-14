@@ -18,11 +18,11 @@ projection.o: projection.cu projection.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
 rnd.o: rnd.cu rnd.h
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-potential.o: potential.cu potential.h cudacall.h
+potential.o: potential.cu potential.h 
 	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
-jensenDevLib.a: gibbs.o projection.o rnd.o
-	nvcc -lib -o $@  gibbs.o projection.o rnd.o
-jensenLink.o: jensen.o potential.o jensenDevLib.a
+jensenDevLib.a: gibbs.o projection.o rnd.o potential.o
+	nvcc -lib -o $@  gibbs.o projection.o rnd.o potential.o
+jensenLink.o: jensen.o jensenDevLib.a
 	nvcc -dlink $(GENCODE_FLAGS) -o $@ $^
 
 clean:
