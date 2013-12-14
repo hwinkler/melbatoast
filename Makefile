@@ -1,23 +1,29 @@
-CC=c99
-CFLAGS=-O2  
+CC=nvcc
+CFLAGS=
 
-all: tests 
+GENCODE_FLAGS   := -arch=sm_35
+
+
+all: build
+
+build: jensenDevLib.a jensen
+
+jensen: jensen.o potential.o jensenLink.o jensenDevLib.a
+	nvcc -o $@ $+ $(LIBRARIES)
+jensen.o: jensen.cu gibbs.h
+	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
+gibbs.o: gibbs.cu gibbs.h projection.h
+	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
+projection.o: projection.cu
+	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
+rnd.o: rnd.cu
+	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
+potential.o: potential.cu
+	nvcc  $(CFLAGS) -dc $(GENCODE_FLAGS) -o $@ -c $<
+jensenDevLib.a: gibbs.o projection.o rnd.o
+	nvcc -lib -o $@  gibbs.o projection.o rnd.o
+jensenLink.o: jensen.o potential.o jensenDevLib.a
+	nvcc -dlink $(GENCODE_FLAGS) -o $@ $^
 
 clean:
-	rm -f   *.o  mtwist-1.4/*.o tests/*.o tests/jensen tests/projection
-
-tests: tests/projection tests/jensen
-
-tests/projection: projection.o tests/projection.o
-
-tests/jensen: gibbs.o potential.o projection.o mtwist-1.4/mtwist.o tests/jensen.o
-
-tests/projection.o: tests/projection.c
-
-projection.o: projection.c projection.h
-
-potential.o: potential.c potential.h
-
-gibbs.o: gibbs.c gibbs.h potential.h projection.h
-
-mtwist-1.4/mtwist.o: mtwist-1.4/mtwist.c mtwist-1.4/mtwist.h
+	rm -f         *.o  tests/*.o jensen

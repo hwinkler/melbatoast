@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "potential.h"
 
+__device__
 void initPotential(Potential*p, 
                     int numStates,
                     float* conditionals,

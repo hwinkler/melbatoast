@@ -7,6 +7,8 @@
 #include "gibbs.h"
 #include "projection.h"
 
+
+
 #ifndef DEBUG
 #define DEBUG 0
 #endif
@@ -22,7 +24,7 @@
 __device__
 extern double mt_drand();
 __device__
-extern void mt_seed();
+extern void mt_seed(int);
 
 __device__
 void _initDistribution (float* distribution, int n){
@@ -99,16 +101,16 @@ void _conditionalGiven(const Potential *const potentials , int offset, const int
 
 __device__
 void gibbs (const Potential* const potentials, int numPotentials, const int *const initialStates,
-            int counts[], int numCounts, int numIterations) {
+            int counts[], int numCounts, int numIterations, int seeds[]) {
   
-  mt_seed();
+  mt_seed(seeds[blockIdx.x]);
 
   int* states = (int*) malloc (numPotentials * sizeof(int));
   memcpy (states, initialStates, numPotentials*sizeof(int));
 
   memset (counts, 0, numCounts* sizeof(int));
     
-  for (int i=0; i<numIterations; i++){
+  for (int i=0; i<numIterations/blockDim.x; i++){
     
     for (int j=0; j < numPotentials; j++){
       const Potential *const p = potentials + j;
@@ -118,8 +120,7 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
       float distribution [MAX_STATES];
       _initDistribution(distribution, p->numStates);
 
-      
-     
+           
       // Obtain the conditional distribution for the current potential
 
       _conditionalGiven (potentials, j, states, 0, distribution);     
