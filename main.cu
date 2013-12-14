@@ -431,6 +431,5 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaFree (devParents));
   CUDA_CALL(cudaFree (devStates));
   CUDA_CALL(cudaFree (devCounts));
-  CUDA_CALL(cudaFree (devPotentials));
 
 }
