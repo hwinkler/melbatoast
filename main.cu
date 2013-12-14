@@ -34,8 +34,8 @@ __device__ double rnd(curandState* state) {
 
 __device__ void rndSeed ( curandState * state){
   unsigned int seed = (unsigned int) clock();
-  int id =  blockIdx.x ; //threadIdx.x + blockIdx.x * blockDim.x;
-  curand_init ( seed, id, 0, &state[id] );
+  int id =  threadIdx.x + blockIdx.x * blockDim.x;
+  curand_init ( seed, id, 0, state );
 } 
 
 
