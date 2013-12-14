@@ -162,7 +162,7 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
   int * counts = countsBase + blockIdx.x * numCounts;
   memset ( counts, 0, numCounts* sizeof(int));
     
-  for (int i=0; i<numIterations/blockDim.x; i++){
+  for (int i=0; i<numIterations; i++){
     
     for (int j=0; j < numPotentials; j++){
       const Potential *const p = potentials + j;
