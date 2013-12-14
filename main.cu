@@ -387,9 +387,7 @@ int main (int argc, char ** argv){
   }
 
   //data: B=n, E=n
- 
- 
-  // b->isFrozen = e->isFrozen = true;
+
   freezeDevicePotential(db, 1);
   freezeDevicePotential(de, 1);
   
