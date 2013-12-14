@@ -380,7 +380,7 @@ int main (int argc, char ** argv){
     printf ("Potential %c %p:\n", 'A' + i, p);
     printDevicePotential(p);
   }
-  return 0;
+
   //data: B=n, E=n
  
  
