@@ -152,14 +152,15 @@ void _conditionalGiven(const Potential *const potentials , int offset, const int
 
 __global__
 void gibbs (const Potential* const potentials, int numPotentials, const int *const initialStates,
-            int counts[], int numCounts, int numIterations) {
+            int countsBase[], int numCounts, int numIterations) {
   curandState rndState;
   rndSeed(&rndState);
 
   int* states = (int*) malloc (numPotentials * sizeof(int));
   memcpy (states, initialStates, numPotentials*sizeof(int));
 
-  memset (counts, 0, numCounts* sizeof(int));
+  int * counts = countsBase + blockIdx.x * numCounts;
+  memset ( counts, 0, numCounts* sizeof(int));
     
   for (int i=0; i<numIterations/blockDim.x; i++){
     
@@ -254,8 +255,11 @@ void initPotential(Potential*p,
 }
 
 int freezeDevicePotential(Potential *pd, int frozen){
-  int offset = (char *) &pd->isFrozen - (char*)pd;
-  CUDA_CALL(cudaMemcpy ( pd + offset,  &frozen, sizeof(pd->isFrozen), cudaMemcpyHostToDevice));
+  Potential p;  
+  CUDA_CALL(cudaMemcpy ( &p,  pd, sizeof(p), cudaMemcpyDeviceToHost));
+  p.isFrozen = frozen;
+  CUDA_CALL(cudaMemcpy ( pd, &p, sizeof(p), cudaMemcpyHostToDevice));
+
   return 0;
 }
 
@@ -395,8 +399,6 @@ int main (int argc, char ** argv){
   for (int i=0; i< numPotentials; i++){
     numConfigurations *= numStates[i];
   }
-  int counts[numConfigurations];
-  memset (counts, 0, numConfigurations * sizeof(int));
 
  // initial config: ynyyn  (we use y=0, n=1)
   int  states [numPotentials] = {0,1,0,0,1};
@@ -404,16 +406,22 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaMalloc((void**)&devStates,  numPotentials* sizeof(int)));
   CUDA_CALL(cudaMemcpy (devStates, states, numPotentials* sizeof(int), cudaMemcpyHostToDevice));
 
+  int counts[numConfigurations * N];
+  memset (counts, 0, numConfigurations * N * sizeof(int));
   int * devCounts ;
-  CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
-  CUDA_CALL(cudaMemcpy (devCounts, counts, numConfigurations* sizeof(int), cudaMemcpyHostToDevice));
+  CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* N * sizeof(int)));
+  CUDA_CALL(cudaMemcpy (devCounts, counts, numConfigurations* N * sizeof(int), cudaMemcpyHostToDevice));
 
   gibbs<<<1,N>>>(devPotentials, numPotentials, devStates, devCounts, numConfigurations, 100);
 
-  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations* sizeof(int), cudaMemcpyDeviceToHost));
+  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations* N * sizeof(int), cudaMemcpyDeviceToHost));
 
   for (int j=0; j < numConfigurations; j++){
-    printf("%4d: %4d\n", j, counts[j]);
+      printf("%4d: ", j);
+    for (int n =0; n< N; n++){
+      printf("%6d", counts[j + N * numConfigurations ]);
+    }
+    printf("\n");
   }
 
 }
