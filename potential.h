@@ -23,3 +23,5 @@ extern void initPotential(Potential*p,
                     Potential** parents,
                    int numParents);
 
+int printDevicePotential (Potential*p);
+

@@ -4,12 +4,7 @@
 #include <cuda.h>
 #include "potential.h"
 #include "gibbs.h"
-
-
-#define CUDA_CALL(x) do { if((x) != cudaSuccess) { \
-      printf("Error %d at %s:%d;  %s\n",x, __FILE__,__LINE__,   cudaGetErrorString(x));  \
-    return EXIT_FAILURE;}} while(0)
-
+#include "cudacall.h"
 
 int main (int argc, char ** argv){
 
@@ -57,6 +52,11 @@ int main (int argc, char ** argv){
   initPotential<<<1, 1>>> (de, numStates[4], dce,
                   (Potential *[]) {dd, dc}, 2 );
   
+  
+  for (int i=0; i< numPotentials; i++){
+    printDevicePotential(devPotentials+i);
+  }
+
   //data: B=n, E=n
  
  
