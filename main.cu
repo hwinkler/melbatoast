@@ -171,8 +171,10 @@ void initPotential(Potential*p,
                     int numParents) {
   p->numStates = numStates;
   int numConditionals = numStates;
+
   for (int iParent=0; iParent < numParents; iParent++){
     Potential * parent = parents[iParent];
+
     numConditionals *= parent->numStates;
     int indexOfChildInParent = parent->numChildren;
     parent->children[indexOfChildInParent] = p;
@@ -190,7 +192,7 @@ void initPotential(Potential*p,
 
   p->numParents = numParents;
   p->numChildren = 0;
-  if (numParents > 0){
+  if (numParents > 0){ //suspicious that we need this or else mem err
     memcpy (p->parents,  parents, numParents * sizeof(Potential*));
   } 
   
@@ -333,32 +335,52 @@ int main (int argc, char ** argv){
   printf("devConditionals = %p\n", devConditionals);
 
   const int numStates[numPotentials] = {2,2,2,2,2};
-  // P(A)
-  initPotential<<<1, 1>>> (da, numStates[0], dca, 
-                  (Potential *[]) {}, 0 );
+  Potential * parents[MAX_PARENTS];
+  Potential ** devParents;
+  CUDA_CALL(cudaMalloc ( (void**) &devParents, MAX_PARENTS * sizeof( Potential * ) ));
 
-  printDevicePotential(da);
-  return 0;
-  // P(B|A)
-  initPotential<<<1, 1>>> (db, numStates[1], dcb, 
-                  (Potential *[]) {da}, 1 );
-  // P(C|A)
-  initPotential<<<1, 1>>> (dc, numStates[2], dcc, 
-                  (Potential *[]) {da}, 1 );
-  // P(D|B)
-  initPotential<<<1, 1>>> (dd, numStates[3], dcd, 
-                  (Potential *[]) {db}, 1 );
-  // P(E|D,C)
-  initPotential<<<1, 1>>> (de, numStates[4], dce,
-                  (Potential *[]) {dd, dc}, 2 );
+   // P(A)
   
+  initPotential<<<1, 1>>> (da, numStates[0], dca, 
+                  devParents, 0 );
+  printDevicePotential(da);
+
+  // P(B|A)
+  parents[0] = da;
+  CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
+  
+  initPotential<<<1, 1>>> (db, numStates[1], dcb, 
+                 devParents, 1 );
+  printDevicePotential(db);
+
+
+
+  // P(C|A)
+  parents[0] = da;
+  CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
+  initPotential<<<1, 1>>> (dc, numStates[2], dcc, 
+                 devParents, 1 );
+  printDevicePotential(dc);
+  // P(D|B)
+  parents[0] = db;
+  CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
+  initPotential<<<1, 1>>> (dd, numStates[3], dcd, 
+                 devParents, 1 );
+  printDevicePotential(dd);
+  // P(E|D,C)
+  parents[0] = dd;
+  parents[1] = dc;
+  CUDA_CALL(cudaMemcpy (devParents, parents,  MAX_PARENTS * sizeof( Potential * ), cudaMemcpyHostToDevice));
+  initPotential<<<1, 1>>> (de, numStates[4], dce,
+                  devParents, 2 );
+  printDevicePotential(de);
   
   for (int i=0; i< numPotentials; i++){
     Potential* p = da + i;
     printf ("Potential %c %p:\n", 'A' + i, p);
     printDevicePotential(p);
   }
-
+  return 0;
   //data: B=n, E=n
  
  
