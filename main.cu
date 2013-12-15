@@ -300,23 +300,23 @@ int printDevicePotential (Potential*pd) {
   if (p.numParents >=0 && p.numParents <= MAX_PARENTS){
     for (int i=0; i<p.numParents; i++){
       int offset = p.parents[i] - pd;
-      printf("%11s[%3d] %6d\n",  "parent", i, offset);
+      printf("%12s[%3d] %6d\n",  "parent", i, offset);
     }
   }
   if (p.numChildren >=0 && p.numChildren <= MAX_CHILDREN){
     for (int i=0; i<p.numChildren; i++){
       int offset = p.children[i] - pd;
-      printf("%11s[%3d] %6d\n",  "child", i, offset);
+      printf("%12s[%3d] %6d\n",  "child", i, offset);
     }
   }
   if (p.numChildren >=0 && p.numChildren <= MAX_CHILDREN){
     for (int i=0; i<p.numChildren; i++){
-      printf("%11s[%3d] %6d\n",  "indexInChild", i, p.indexInChild[i]);
+      printf("%12s[%3d] %6d\n",  "indexInChild", i, p.indexInChild[i]);
     }
   }
   if (p.numParents >=0 && p.numParents <= MAX_PARENTS){
     for (int i=0; i<=p.numParents; i++){
-      printf("%11s[%3d] %6d\n",  "dimensions", i, p.dimensions[i]);
+      printf("%12s[%3d] %6d\n",  "dimensions", i, p.dimensions[i]);
     }
   }
   printf("%17s %6d\n",  "isFrozen", p.isFrozen);
@@ -528,11 +528,6 @@ int options (int argc, char **argv) {
         }
     }
      
-  /* Instead of reporting ‘--verbose’
-     and ‘--brief’ as they are encountered,
-     we report the final status resulting from them. */
-  if (verboseFlag)
-    puts ("verbose flag is set");
      
   /* Print any remaining command line arguments (not options). */
   if (optind < argc)
@@ -546,12 +541,40 @@ int options (int argc, char **argv) {
     }
   return 0;
 }
+
+void printTime(){
+  char outstr[200];
+  time_t t;
+  struct tm *tmp;
+
+  t = time(NULL);
+  tmp = localtime(&t);
+  if (tmp == NULL) {
+    perror("localtime");
+    exit(EXIT_FAILURE);
+  }
+
+  if (strftime(outstr, sizeof(outstr),"%a, %d %b %Y %T %z", tmp) == 0) {
+    fprintf(stderr, "strftime returned 0");
+    exit(EXIT_FAILURE);
+  }
+  printf("%s", outstr);
+}
+
 int main(int argc, char** argv){
   options(argc, argv);
   if (networkFileName == NULL || stateFileName == NULL){
     fprintf(stderr, "Error: missing a required parameter: -f netfile or -s statefile\n");
     exit(1);
   }
+  if (verboseFlag){
+    
+    printf("Bayesian network Gibbs sampler ");
+    printTime();
+    printf ("\nNetwork file: %s\nState file: %s\n", networkFileName, stateFileName);
+
+  }
+
   parseNetwork(networkFileName);
   int * states = parseStates(stateFileName);
  
@@ -563,12 +586,13 @@ int main(int argc, char** argv){
     //printDevicePotential(devPotentials + i);
   }
 
-    
-  //for (int i=0; i< numParsedPotentials; i++){
-    //Potential* p = devPotentials + i;
-    //printf ("Potential %c %p:\n", 'A' + i, p);
-    //printDevicePotential(p);
-  //}
+  if (verboseFlag){
+    for (int i=0; i< numParsedPotentials; i++){
+      Potential* p = devPotentials + i;
+      printf ("\nPotential %c %p:\n", 'A' + i, p);
+      printDevicePotential(p);
+    }
+  }
 
   int numConfigurations = 1;
   for (int i=0; i< numParsedPotentials; i++){
