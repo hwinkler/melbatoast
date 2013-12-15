@@ -521,6 +521,9 @@ int options (int argc, char **argv) {
      
         case '?':
           /* getopt_long already printed an error message. */
+          // no it didn't
+          fprintf (stderr, "Usage: %s -f netfile -s statefile [--verbose]\n", argv[0]);
+          exit(1);
           break;
      
         default:
