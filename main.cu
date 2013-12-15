@@ -384,6 +384,7 @@ void parseCallback(char* name, int numStates, char**parents, int numParents, flo
   pi->numParents = numParents;
   pi->table = (float*)malloc(lengthTable*sizeof(float));
   memcpy (pi->table, table, lengthTable*sizeof(float));
+  pi->lengthTable = lengthTable;
   pi->devPtr = NULL;
     
     // initPotential<<<1, 1>>> (da, numStates[0], dca, 
