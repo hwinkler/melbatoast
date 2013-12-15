@@ -1,6 +1,6 @@
 all: jensen
 
-jensen: main.cu  potential.h cudacall.h 
-	nvcc -arch=sm_20 main.cu -o jensen
+jensen: main.cu  gram.c parse.c potential.h cudacall.h 
+	nvcc -arch=sm_20 main.cu gram.c parse.c -o jensen
 clean:
 	rm -f *.o  tests/*.o jensen main

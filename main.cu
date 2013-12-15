@@ -11,7 +11,7 @@
 
 #include "potential.h"
 #include "cudacall.h"
-
+#include "parse.h"
 
 
 #ifndef DEBUG
@@ -324,7 +324,7 @@ int printDevicePotential (Potential*pd) {
 
 
 
-int main (int argc, char ** argv){
+int mainxxx (int argc, char ** argv){
 
   const int N = 10;
   const int M = 100;
@@ -392,9 +392,6 @@ int main (int argc, char ** argv){
   initPotential<<<1, 1>>> (de, numStates[4], dce,
                   devParents, 2 );
 
-
-
-
   //data: B=n, E=n
 
   freezeDevicePotential(db, 1);
@@ -439,5 +436,189 @@ int main (int argc, char ** argv){
   CUDA_CALL(cudaFree (devParents));
   CUDA_CALL(cudaFree (devStates));
   CUDA_CALL(cudaFree (devCounts));
+  return 0;
+}
 
+
+const int POTENTIALINFO_BLOCK_SIZE = 1000;
+
+typedef struct PotentialInfo {
+  char* name;
+  char** parentNames;
+  int numStates;
+  int  numParents;
+  float *table;
+  int lengthTable;
+  Potential *devPtr;
+}PotentialInfo;
+
+struct PotentialInfo **parsedPotentials =
+  (PotentialInfo**)malloc(POTENTIALINFO_BLOCK_SIZE * sizeof(PotentialInfo*));
+int numParsedPotentials = 0;
+  
+///
+/// Allocate a copy of a string with malloc.
+///
+
+char *allocName (char * src){
+  int n = strlen (src);
+  char * p = (char*) malloc(n);
+  strcpy (p, src);
+  return p;
+}
+
+///
+/// The parser calls this function with the info for each parsed potential.
+/// We just save the info for later.
+///
+
+void parseCallback(char* name, int numStates, char**parents, int numParents, float* table, int lengthTable){
+  // save this potential info for later
+  PotentialInfo * pi = (PotentialInfo*)calloc(1, sizeof(PotentialInfo));
+  if (((numParsedPotentials+1) % POTENTIALINFO_BLOCK_SIZE) == 0){
+    parsedPotentials = 
+      (PotentialInfo**) realloc(parsedPotentials, 
+                               (numParsedPotentials +POTENTIALINFO_BLOCK_SIZE) 
+                               * sizeof(PotentialInfo*));
+  }
+  parsedPotentials[numParsedPotentials++] = pi;
+  pi->name = allocName(name);
+  pi->parentNames = (char**) calloc(numParents, sizeof(char*));
+  for (int i=0; i< numParents; i++){
+    pi->parentNames[i] = allocName(parents[i]);
+  }
+  pi->numStates = numStates;
+  pi->numParents = numParents;
+  pi->table = (float*)malloc(lengthTable*sizeof(float));
+  memcpy (pi->table, table, lengthTable*sizeof(float));
+  pi->devPtr = NULL;
+    
+    // initPotential<<<1, 1>>> (da, numStates[0], dca, 
+    //              devParents, 0 );
+}
+
+int initOnePotential(Potential * devPotential, PotentialInfo ** ppi, int npi, int ip){
+  PotentialInfo* pi = ppi[ip];
+  // find its parents
+
+  Potential ** devParents;
+  CUDA_CALL(cudaMalloc ( (void**) &devParents, MAX_PARENTS * sizeof( Potential * ) ));
+
+  int err = 0;
+  for ( int iParent=0; iParent < pi->numParents; iParent++){
+    char * parentName = pi->parentNames[iParent];
+
+    int found = 0;
+    for (int i= ip-1; i>=0 ; --i){
+      PotentialInfo* candidate = ppi[i];
+      if (strncmp (candidate->name, parentName, 64) == 0){
+          CUDA_CALL(cudaMemcpy (devParents+iParent, candidate->devPtr ,  sizeof( Potential * ), cudaMemcpyHostToDevice));
+          found = 1;
+          break;
+      }
+    }
+    if(found == 0){
+      fprintf(stderr, "for %s, cannot locate parent %s\n", pi->name, parentName);
+      err = 1;
+      break;
+    }
+  }
+  float *devConditionals = 0;
+  if ( err == 0){
+    // copy the conditional table over
+    
+    CUDA_CALL(cudaMalloc ( (void**) &devConditionals, pi->lengthTable * sizeof( float ) ));
+    CUDA_CALL(cudaMemcpy (devConditionals, pi->table, pi->lengthTable* sizeof(float), 
+                          cudaMemcpyHostToDevice));    
+  }
+  if (err == 0){
+      initPotential<<<1, 1>>> (devPotential, pi->numStates, devConditionals, 
+                 devParents, pi->numParents );
+  }
+
+  // Remeber the devPotential for this parsed potential
+  pi->devPtr = devPotential;
+
+  // It is OK to free the devParents as the device code made a copy
+  CUDA_CALL(cudaFree ( devParents)); 
+  return err;
+}
+
+void parseNetwork(const char * fileName){
+  FILE * fp1 = fopen(fileName, "r");
+  parse(fp1, parseCallback);
+  fclose(fp1);
+}
+  
+int* parseStates(const char* fileName){
+  int *states =(int*) calloc (numParsedPotentials, sizeof(int));
+  FILE * fp2 = fopen(fileName, "r");
+  char line[1024];
+
+  int iState = 0;
+  while (iState < numParsedPotentials && fgets(line, sizeof(line)-1, fp2)) {
+    
+  }
+  fclose(fp2);
+  return states;
+}
+
+int main(int argc, char** argv){
+  parseNetwork("jensen.bn");
+  int * states = parseStates("jensen.state");
+ 
+  Potential* devPotentials;
+  CUDA_CALL(cudaMalloc ( (void**) &devPotentials, numParsedPotentials *sizeof( Potential ) ));
+
+  for (int i=0; i<numParsedPotentials; i++){
+    initOnePotential (devPotentials + i, parsedPotentials, numParsedPotentials, i);
+  }
+
+
+  //freezeDevicePotential(db, 1);
+  //freezeDevicePotential(de, 1);
+    
+  for (int i=0; i< numParsedPotentials; i++){
+    Potential* p = devPotentials + i;
+    printf ("Potential %c %p:\n", 'A' + i, p);
+    printDevicePotential(p);
+  }
+
+  int numConfigurations = 1;
+  for (int i=0; i< numParsedPotentials; i++){
+    numConfigurations *= parsedPotentials[i]->numStates;
+  }
+
+ // initial config: ynyyn  (we use y=0, n=1)
+
+  int * devStates;
+  CUDA_CALL(cudaMalloc((void**)&devStates,  numParsedPotentials* sizeof(int)));
+  CUDA_CALL(cudaMemcpy (devStates, states, numParsedPotentials* sizeof(int), cudaMemcpyHostToDevice));
+
+  free(states);
+  states = NULL;
+
+  int * devCounts ;
+  CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
+  CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations*   sizeof(int)));
+
+  const int N=1, M=1;
+  gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, 100);
+
+  int counts[numConfigurations];
+  CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
+
+  for (int j=0; j < numConfigurations; j++){
+      printf("%4d: ", j);
+    for (int n =0; n< 1; n++){
+      printf("%6d", counts[j + n * numConfigurations ]);
+    }
+    printf("\n");
+  }
+
+  CUDA_CALL(cudaFree (devPotentials));
+  CUDA_CALL(cudaFree (devStates));
+  CUDA_CALL(cudaFree (devCounts));
+
+  
 }
