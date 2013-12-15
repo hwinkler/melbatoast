@@ -45,7 +45,7 @@
 }  
    
 %syntax_error {  
-  printf("Syntax error\n"); 
+  fprintf(stderr, "Syntax error\n"); 
 }   
    
 program ::= potentials. 
