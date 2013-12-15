@@ -1,5 +1,8 @@
 a.out
 **/*.o
+**/*.a
 **/.DS_Store
-tests/jensen
+jensen
+main
 tests/projection
+gram.out
