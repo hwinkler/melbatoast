@@ -93,7 +93,7 @@ float potentialTable[MAX_TABLE];
 int potentialTableLength = 0;
 
 void startPotential(Token label){
-  printf("\tstartPotential %s \n" , label.z);
+  //printf("\tstartPotential %s \n" , label.z);
   
   handler (label.z, 
            potentialNumStates,
@@ -114,15 +114,15 @@ void startPotential(Token label){
            
 }
 void addDim(Token dim) {
-   printf("\taddDim %d \n" ,(int) dim.value);
+   //printf("\taddDim %d \n" ,(int) dim.value);
   potentialNumStates = (int)dim.value;
 }
 void addValue(Token value){
-  printf("\taddValue %lf\n", value.value);
+  //printf("\taddValue %lf\n", value.value);
   potentialTable[potentialTableLength++] = value.value;
 }
 void addCondition(Token cond){
-  printf("\taddCondition %s\n", cond.z);
+  //printf("\taddCondition %s\n", cond.z);
   char * p = malloc (1+strlen(cond.z));
   strcpy (p, cond.z);
   potentialParents[potentialNumParents++] = p;

@@ -356,15 +356,15 @@ char *allocName (char * src){
 ///
 
 void parseCallback(char* name, int numStates, char**parents, int numParents, float* table, int lengthTable){
-  printf("callback %s \n numStates %d \n parents[", name, numStates);
+  //printf("callback %s \n numStates %d \n parents[", name, numStates);
   for (int i=0; i< numParents; i++){
-    printf (" %s", parents[i] );
+    //printf (" %s", parents[i] );
   }
-  printf("]\n table [");
+  //printf("]\n table [");
   for (int i=0; i< lengthTable; i++){
-    printf(" %f", table[i]);
+    //printf(" %f", table[i]);
   }
-  printf("]\n");
+  //printf("]\n");
 
   // save this potential info for later
   PotentialInfo * pi = (PotentialInfo*)calloc(1, sizeof(PotentialInfo));
@@ -389,26 +389,26 @@ void parseCallback(char* name, int numStates, char**parents, int numParents, flo
 }
 
 int initOnePotential(Potential * devPotential, PotentialInfo ** ppi, int npi, int ip){
-  printf("initOnePotential\n");
+  //printf("initOnePotential\n");
   PotentialInfo* pi = ppi[ip];
   // find its parents
   
   Potential ** devParents;
   CUDA_CALL(cudaMalloc ( (void**) &devParents, MAX_PARENTS * sizeof( Potential * ) ));
-  printf("  initOnePotential -- malloced parents\n");
+  //printf("  initOnePotential -- malloced parents\n");
   int err = 0;
   for ( int iParent=0; iParent < pi->numParents; iParent++){
     char * parentName = pi->parentNames[iParent];
-    printf("  initOnePotential -- parent %s\n", parentName);
+    //printf("  initOnePotential -- parent %s\n", parentName);
 
     int found = 0;
     for (int i= ip-1; i>=0 ; --i){
       PotentialInfo* candidate = ppi[i];
       if (strncmp (candidate->name, parentName, 64) == 0){
-        printf("  initOnePotential -- found parent %s = %p\n", parentName, candidate->devPtr);
+        //printf("  initOnePotential -- found parent %s = %p\n", parentName, candidate->devPtr);
           CUDA_CALL(cudaMemcpy (devParents+iParent, &candidate->devPtr ,  sizeof( Potential * ), cudaMemcpyHostToDevice));
           found = 1;
-          printf("  initOnePotential -- copied parent %s\n", parentName);
+          //printf("  initOnePotential -- copied parent %s\n", parentName);
           break;
       }
     }
@@ -421,18 +421,18 @@ int initOnePotential(Potential * devPotential, PotentialInfo ** ppi, int npi, in
   float *devConditionals = 0;
   if ( err == 0){
     // copy the conditional table over
-     printf("  initOnePotential -- allocing table length %d\n",  pi->lengthTable);
+     //printf("  initOnePotential -- allocing table length %d\n",  pi->lengthTable);
   
     CUDA_CALL(cudaMalloc ( (void**) &devConditionals, pi->lengthTable * sizeof( float ) ));
     CUDA_CALL(cudaMemcpy (devConditionals, pi->table, pi->lengthTable* sizeof(float), 
                           cudaMemcpyHostToDevice));    
   }
   if (err == 0){
-    printf("calling initPotential %p\n numStates=%d\n table=[",devPotential,   pi->numStates);
+    //printf("calling initPotential %p\n numStates=%d\n table=[",devPotential,   pi->numStates);
     for (int i=0; i< pi->lengthTable; i++){
-      printf (" %f", pi->table[i]);
+      //printf (" %f", pi->table[i]);
     }
-    printf(" ]\n");
+    //printf(" ]\n");
 
     initPotential<<<1, 1>>> (devPotential, pi->numStates, devConditionals, 
                  devParents, pi->numParents );
@@ -474,15 +474,15 @@ int main(int argc, char** argv){
 
   for (int i=0; i<numParsedPotentials; i++){
     initOnePotential (devPotentials + i, parsedPotentials, numParsedPotentials, i);
-    printDevicePotential(devPotentials + i);
+    //printDevicePotential(devPotentials + i);
   }
 
     
-  for (int i=0; i< numParsedPotentials; i++){
-    Potential* p = devPotentials + i;
-    printf ("Potential %c %p:\n", 'A' + i, p);
-    printDevicePotential(p);
-  }
+  //for (int i=0; i< numParsedPotentials; i++){
+    //Potential* p = devPotentials + i;
+    //printf ("Potential %c %p:\n", 'A' + i, p);
+    //printDevicePotential(p);
+  //}
 
   int numConfigurations = 1;
   for (int i=0; i< numParsedPotentials; i++){
