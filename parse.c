@@ -51,19 +51,24 @@ int parseTokens(FILE *fp)
       t.z = tok;
       t.value = 0;
       t.n = 0;
+
+      printf("token %s ", tok);
       if (beginsWithLetter(tok)) {
+        printf(" WORD\n");
         t.n = WORD;
         Parse(pParser, WORD, t);
-      } else if (isNumber(tok)) {
-        sscanf(tok, "%lf", &t.value);
-        Parse (pParser, NUMBER, t);
       } else if ( isInteger(tok) ){
+        printf(" INTEGER\n");
         int n = 0;
          sscanf(tok, "%d", &n);
          t.value = n;
         Parse (pParser, INTEGER, t);
+      } else if (isNumber(tok)) {
+        printf(" NUMBER\n");
+        sscanf(tok, "%lf", &t.value);
+        Parse (pParser, NUMBER, t);
       } else {
-        fprintf(stderr, "unrecognized token <%s>\n", tok);
+        fprintf(stderr, " unrecognized token <%s>\n", tok);
       }
     }
   }
