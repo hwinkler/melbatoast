@@ -557,7 +557,7 @@ int* parseStates(const char* fileName){
 
   int iState = 0;
   while (iState < numParsedPotentials && fgets(line, sizeof(line)-1, fp2)) {
-    
+    sscanf (line, "%d", states + iState);
   }
   fclose(fp2);
   return states;
@@ -574,9 +574,6 @@ int main(int argc, char** argv){
     initOnePotential (devPotentials + i, parsedPotentials, numParsedPotentials, i);
   }
 
-
-  //freezeDevicePotential(db, 1);
-  //freezeDevicePotential(de, 1);
     
   for (int i=0; i< numParsedPotentials; i++){
     Potential* p = devPotentials + i;
@@ -587,6 +584,15 @@ int main(int argc, char** argv){
   int numConfigurations = 1;
   for (int i=0; i< numParsedPotentials; i++){
     numConfigurations *= parsedPotentials[i]->numStates;
+  }
+
+  // If any state is negative, that is a flag that its state is evidence, i.e. 
+  // measured data.
+  for (int iState=0; iState < numParsedPotentials; iState++){
+    if (states[iState] < 0){
+      states[iState] = -states[iState];
+      freezeDevicePotential(devPotentials + iState, 1);
+    }
   }
 
  // initial config: ynyyn  (we use y=0, n=1)
