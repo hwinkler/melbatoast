@@ -740,7 +740,7 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 47 "gram.y"
   
-  printf("Syntax error\n"); 
+  fprintf(stderr, "Syntax error\n"); 
 #line 745 "gram.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
