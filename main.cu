@@ -386,28 +386,29 @@ void parseCallback(char* name, int numStates, char**parents, int numParents, flo
   memcpy (pi->table, table, lengthTable*sizeof(float));
   pi->lengthTable = lengthTable;
   pi->devPtr = NULL;
-    
-    // initPotential<<<1, 1>>> (da, numStates[0], dca, 
-    //              devParents, 0 );
 }
 
 int initOnePotential(Potential * devPotential, PotentialInfo ** ppi, int npi, int ip){
+  printf("initOnePotential\n");
   PotentialInfo* pi = ppi[ip];
   // find its parents
-
+  
   Potential ** devParents;
   CUDA_CALL(cudaMalloc ( (void**) &devParents, MAX_PARENTS * sizeof( Potential * ) ));
-
+  printf("  initOnePotential -- malloced parents\n");
   int err = 0;
   for ( int iParent=0; iParent < pi->numParents; iParent++){
     char * parentName = pi->parentNames[iParent];
+    printf("  initOnePotential -- parent %s\n", parentName);
 
     int found = 0;
     for (int i= ip-1; i>=0 ; --i){
       PotentialInfo* candidate = ppi[i];
       if (strncmp (candidate->name, parentName, 64) == 0){
-          CUDA_CALL(cudaMemcpy (devParents+iParent, candidate->devPtr ,  sizeof( Potential * ), cudaMemcpyHostToDevice));
+        printf("  initOnePotential -- found parent %s = %p\n", parentName, candidate->devPtr);
+          CUDA_CALL(cudaMemcpy (devParents+iParent, &candidate->devPtr ,  sizeof( Potential * ), cudaMemcpyHostToDevice));
           found = 1;
+          printf("  initOnePotential -- copied parent %s\n", parentName);
           break;
       }
     }
@@ -420,7 +421,8 @@ int initOnePotential(Potential * devPotential, PotentialInfo ** ppi, int npi, in
   float *devConditionals = 0;
   if ( err == 0){
     // copy the conditional table over
-    
+     printf("  initOnePotential -- allocing table length %d\n",  pi->lengthTable);
+  
     CUDA_CALL(cudaMalloc ( (void**) &devConditionals, pi->lengthTable * sizeof( float ) ));
     CUDA_CALL(cudaMemcpy (devConditionals, pi->table, pi->lengthTable* sizeof(float), 
                           cudaMemcpyHostToDevice));    
@@ -436,7 +438,7 @@ int initOnePotential(Potential * devPotential, PotentialInfo ** ppi, int npi, in
                  devParents, pi->numParents );
   }
 
-  // Remeber the devPotential for this parsed potential
+  // Remember the devPotential for this parsed potential
   pi->devPtr = devPotential;
 
   // It is OK to free the devParents as the device code made a copy
