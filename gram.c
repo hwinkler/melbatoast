@@ -62,7 +62,7 @@
 **                       defined, then do no error processing.
 */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 10
+#define YYNOCODE 12
 #define YYACTIONTYPE unsigned char
 #define ParseTOKENTYPE Token
 typedef union {
@@ -76,8 +76,8 @@ typedef union {
 #define ParseARG_PDECL
 #define ParseARG_FETCH
 #define ParseARG_STORE
-#define YYNSTATE 9
-#define YYNRULE 6
+#define YYNSTATE 13
+#define YYNRULE 8
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
@@ -147,25 +147,26 @@ static const YYMINORTYPE yyzerominor = { 0 };
 **  yy_default[]       Default action for each state.
 */
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */    16,    4,    1,    7,    1,    3,    6,    2,    8,    5,
- /*    10 */     9,
+ /*     0 */    22,    5,    1,    9,    2,   12,    3,    6,    1,   11,
+ /*    10 */    10,    3,    7,   13,   23,    8,    4,
 };
 static const YYCODETYPE yy_lookahead[] = {
- /*     0 */     5,    6,    7,    6,    7,    3,    8,    2,    8,    1,
- /*    10 */     0,
+ /*     0 */     6,    7,    8,    2,    3,    1,    2,    7,    8,    4,
+ /*    10 */     4,    2,   10,    0,   11,    1,    9,
 };
 #define YY_SHIFT_USE_DFLT (-1)
-#define YY_SHIFT_MAX 5
+#define YY_SHIFT_MAX 7
 static const signed char yy_shift_ofst[] = {
- /*     0 */     8,    8,    2,    2,   10,    5,
+ /*     0 */     9,    4,    5,   -1,    1,   13,   14,    6,
 };
-#define YY_REDUCE_USE_DFLT (-6)
+#define YY_REDUCE_USE_DFLT (-7)
 #define YY_REDUCE_MAX 3
 static const signed char yy_reduce_ofst[] = {
- /*     0 */    -5,   -3,   -2,    0,
+ /*     0 */    -6,    0,    2,    7,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */    11,   11,   14,   14,   15,   15,   12,   10,   13,
+ /*     0 */    21,   21,   21,   20,   21,   21,   21,   16,   14,   19,
+ /*    10 */    17,   18,   15,
 };
 #define YY_SZ_ACTTAB (int)(sizeof(yy_action)/sizeof(yy_action[0]))
 
@@ -259,9 +260,9 @@ void ParseTrace(FILE *TraceFILE, char *zTracePrompt){
 /* For tracing shifts, the names of all terminals and nonterminals
 ** are required.  The following table supplies these names */
 static const char *const yyTokenName[] = { 
-  "$",             "WORD",          "INTEGER",       "NUMBER",      
-  "error",         "program",       "potentials",    "potential",   
-  "numbers",     
+  "$",             "EOFF",          "WORD",          "INTEGER",     
+  "NUMBER",        "error",         "program",       "potentials",  
+  "potential",     "parents",       "numbers",     
 };
 #endif /* NDEBUG */
 
@@ -270,11 +271,13 @@ static const char *const yyTokenName[] = {
 */
 static const char *const yyRuleName[] = {
  /*   0 */ "program ::= potentials",
- /*   1 */ "potentials ::= potential potentials",
- /*   2 */ "potentials ::=",
- /*   3 */ "potential ::= WORD INTEGER numbers",
- /*   4 */ "numbers ::= NUMBER numbers",
- /*   5 */ "numbers ::=",
+ /*   1 */ "potentials ::= potential potentials EOFF",
+ /*   2 */ "potentials ::= potential EOFF",
+ /*   3 */ "potential ::= WORD parents INTEGER numbers",
+ /*   4 */ "numbers ::= numbers NUMBER",
+ /*   5 */ "numbers ::= NUMBER",
+ /*   6 */ "parents ::= parents WORD",
+ /*   7 */ "parents ::=",
 };
 #endif /* NDEBUG */
 
@@ -579,12 +582,14 @@ static const struct {
   YYCODETYPE lhs;         /* Symbol on the left-hand side of the rule */
   unsigned char nrhs;     /* Number of right-hand side symbols in the rule */
 } yyRuleInfo[] = {
-  { 5, 1 },
-  { 6, 2 },
-  { 6, 0 },
+  { 6, 1 },
   { 7, 3 },
-  { 8, 2 },
-  { 8, 0 },
+  { 7, 2 },
+  { 8, 4 },
+  { 10, 2 },
+  { 10, 1 },
+  { 9, 2 },
+  { 9, 0 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -639,29 +644,41 @@ static void yy_reduce(
   **  #line <lineno> <thisfile>
   **     break;
   */
-      case 0: /* program ::= potentials */
-      case 1: /* potentials ::= potential potentials */ yytestcase(yyruleno==1);
-      case 2: /* potentials ::= */ yytestcase(yyruleno==2);
-#line 51 "gram.y"
-{ done();}
-#line 648 "gram.c"
-        break;
-      case 3: /* potential ::= WORD INTEGER numbers */
-#line 54 "gram.y"
-{ 
-          startPotential(yymsp[-2].minor.yy0, yymsp[-1].minor.yy0);
-}
-#line 655 "gram.c"
-        break;
-      case 4: /* numbers ::= NUMBER numbers */
+      case 3: /* potential ::= WORD parents INTEGER numbers */
 #line 57 "gram.y"
+{ 
+          addDim(yymsp[-1].minor.yy0);  
+          startPotential(yymsp[-3].minor.yy0);
+}
+#line 654 "gram.c"
+        break;
+      case 4: /* numbers ::= numbers NUMBER */
+      case 5: /* numbers ::= NUMBER */ yytestcase(yyruleno==5);
+#line 62 "gram.y"
 {
-        addValue(yymsp[-1].minor.yy0);
+        addValue(yymsp[0].minor.yy0);
 }
 #line 662 "gram.c"
         break;
+      case 6: /* parents ::= parents WORD */
+#line 69 "gram.y"
+{
+        addCondition(yymsp[0].minor.yy0);
+       
+}
+#line 670 "gram.c"
+        break;
+      case 7: /* parents ::= */
+#line 74 "gram.y"
+{
+
+}
+#line 677 "gram.c"
+        break;
       default:
-      /* (5) numbers ::= */ yytestcase(yyruleno==5);
+      /* (0) program ::= potentials */ yytestcase(yyruleno==0);
+      /* (1) potentials ::= potential potentials EOFF */ yytestcase(yyruleno==1);
+      /* (2) potentials ::= potential EOFF */ yytestcase(yyruleno==2);
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -723,8 +740,8 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 47 "gram.y"
   
-  printf("Syntax error %d\n", __LINE__); 
-#line 728 "gram.c"
+  printf("Syntax error\n"); 
+#line 745 "gram.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

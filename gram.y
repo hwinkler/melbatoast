@@ -45,18 +45,38 @@
 }  
    
 %syntax_error {  
-  printf("Syntax error %d\n"); 
+  printf("Syntax error\n"); 
 }   
    
-program ::= potentials. { done();}
-potentials ::= potential potentials. {} 
-potentials ::= . {}
-potential ::= WORD(label) INTEGER(numStates) numbers. { 
-          startPotential(label, numStates);
+program ::= potentials. 
+
+potentials ::= potential potentials EOFF. 
+
+potentials ::= potential EOFF. 
+
+potential ::= WORD(label) parents INTEGER(dims) numbers. { 
+          addDim(dims);  
+          startPotential(label);
 }
-numbers ::= NUMBER(value) numbers. {
+
+numbers ::= numbers NUMBER(value)   . {
         addValue(value);
 }
-numbers ::= .
+numbers ::=  NUMBER(value) . {
+        addValue(value);
+}
+
+parents ::= parents  WORD(parent)   .{
+        addCondition(parent);
+       
+}
+
+parents ::= . {
+
+}
 
 
+
+/*
+
+      */

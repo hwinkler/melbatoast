@@ -1,3 +1,4 @@
-#define WORD                            1
-#define INTEGER                         2
-#define NUMBER                          3
+#define EOFF                            1
+#define WORD                            2
+#define INTEGER                         3
+#define NUMBER                          4

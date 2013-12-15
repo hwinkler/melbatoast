@@ -46,9 +46,9 @@ int parseTokens(FILE *fp)
 
   while (fgets(line, sizeof(line)-1, fp)) {
 
-    for (char *tok = strtok (line, " ,\t\r\n"); tok != NULL; tok = strtok(NULL,  " ,\t\r\n")){
+    for (char *tok = strtok (line, " \t\r\n,|"); tok != NULL; tok = strtok(NULL,  " \t\r\n,|")){
       Token t ;
-      t.z = tok;
+      strncpy(t.z, tok, 63);
       t.value = 0;
       t.n = 0;
 
@@ -60,8 +60,8 @@ int parseTokens(FILE *fp)
       } else if ( isInteger(tok) ){
         printf(" INTEGER\n");
         int n = 0;
-         sscanf(tok, "%d", &n);
-         t.value = n;
+        sscanf(tok, "%d", &n);
+        t.value = n;
         Parse (pParser, INTEGER, t);
       } else if (isNumber(tok)) {
         printf(" NUMBER\n");
@@ -72,18 +72,30 @@ int parseTokens(FILE *fp)
       }
     }
   }
+   printf(" EOFF\n");
+  Token t ;
+  t.value = 0;
+  t.n = EOFF;
+  t.z[0] = '\0';
+  Parse(pParser, EOFF, t);
   ParseFree(pParser, free );
   return 0;
 }
 
-void startPotential(Token label, Token numStates){
-  printf("startPotential %s %d\n" , label.z, (int)numStates.value);
+void startPotential(Token label){
+  printf("\tstartPotential %s \n" , label.z);
+}
+void addDim(Token dim) {
+  printf("\taddDim %d \n" ,(int) dim.value);
 }
 void addValue(Token value){
-  printf("addValue %lf\n", value.value);
+  printf("\taddValue %lf\n", value.value);
+}
+void addCondition(Token cond){
+  printf("\taddCondition %s\n", cond.z);
 }
 void done(){
-  printf("done\n");
+  printf("\tdone\n");
 }
 int main (){
   FILE * fp = fopen("jensen.bn", "r");
