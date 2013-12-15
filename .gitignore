@@ -6,3 +6,4 @@ jensen
 main
 tests/projection
 gram.out
+gram.c
