@@ -6,16 +6,17 @@
 #include "parse.h"
 
 void *ParseAlloc(void *(*mallocProc)(size_t));
-void ParseFree();
+void ParseFree(void*, void (*freeProc)(void*));
 void Parse(
-  void *yyp,                   /* The parser */
-  int yymajor,                 /* The major token code number */
-  Token yyminor       /* The value for the token */
-
+           void *yyp,                   /* The parser */
+           int yymajor,                 /* The major token code number */
+           Token yyminor       /* The value for the token */
            );
+
 int beginsWithLetter (const char *s){
   return isalpha(s[0]);
 }
+
 int isNumber (const char *s){
   int allDigits = 1;
   for (int i=0; s[i]; i++){
@@ -82,8 +83,8 @@ int parseTokens(FILE *fp)
   return 0;
 }
 
-const int MAX_PARENTS = 1000;
-const int MAX_TABLE = 10000;
+#define MAX_PARENTS  1000
+#define MAX_TABLE  10000
 
 PotentialHandler handler;
 int potentialNumStates =0;
