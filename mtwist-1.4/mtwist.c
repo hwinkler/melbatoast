@@ -184,6 +184,7 @@ static char Rcs_Id[] ATTRIBUTE((used)) =
 #ifdef WIN32
 #include <sys/timeb.h>
 #else /* WIN32 */
+#define __USE_BSD
 #include <sys/time.h>
 #endif /* WIN32 */
 
