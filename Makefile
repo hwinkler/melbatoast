@@ -1,7 +1,7 @@
 all: gibbs
 
 gibbs: main.o gram.o parse.o device.o gibbs.o 
-	nvcc -arch=sm_35 main.o device.o gram.o parse.o gibbs.o -o jensen
+	nvcc -arch=sm_35 main.o device.o gram.o parse.o gibbs.o -o gibbs
 
 gibbs.o: gibbs.cu gibbs.h potential.h
 	nvcc -arch=sm_35 -dc gibbs.cu
