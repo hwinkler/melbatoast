@@ -36,11 +36,11 @@
 
 %token_type {Token}  
    
-%include {    
+%include { 
+#include <assert.h>   
 #include "gram.h"
 #include "parse.h"
 
-#define assert(x)
 
 }  
    

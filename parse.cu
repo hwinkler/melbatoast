@@ -124,7 +124,7 @@ void addValue(Token value){
 }
 void addCondition(Token cond){
   //printf("\taddCondition %s\n", cond.z);
-  char * p = malloc (1+strlen(cond.z));
+  char * p = (char*) malloc (1+strlen(cond.z));
   strcpy (p, cond.z);
   potentialParents[potentialNumParents++] = p;
 }

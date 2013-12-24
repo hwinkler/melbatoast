@@ -8,3 +8,5 @@ main
 tests/projection
 gram.out
 gram.c
+gram.cu
+gram.c
