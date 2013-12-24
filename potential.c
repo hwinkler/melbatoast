@@ -26,7 +26,7 @@ void initPotential(Potential*p,
 
   memcpy (p->parents,  parents, numParents * sizeof(Potential*));
   p->numParents = numParents;
-   
+  p->numChildren = 0;
   
   int numDimensions = 1 + numParents;
   p->dimensions[0] = numStates;
