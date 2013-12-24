@@ -1,0 +1,10 @@
+#pragma once
+
+
+#define MAX_DIMENSIONS 10
+#define MAX_STATES 10
+#define MAX_POTENTIALS 100
+#define MAX_CONFIGURATIONS 1000
+
+#define MAX_PARENTS 5
+#define MAX_CHILDREN 5

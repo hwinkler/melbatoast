@@ -1,7 +1,5 @@
 #pragma once
-
-#define MAX_PARENTS 5
-#define MAX_CHILDREN 5
+#include "constants.h"
 
 typedef struct __align__(8) Potential {
   int   numStates;
@@ -16,12 +14,5 @@ typedef struct __align__(8) Potential {
   int isFrozen; 
 } Potential;
 
-__global__
-extern void initPotential(Potential*p, 
-                    int numStates,
-                    float* conditionals,
-                    Potential** parents,
-                   int numParents);
-
-int printDevicePotential (Potential*p);
+//int printDevicePotential (Potential*p);
 
