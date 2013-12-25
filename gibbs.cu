@@ -94,7 +94,7 @@ int _drawFromCumulative (float* cumulative, int n, curandState* rndState){
   }
   DPRINT("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
   assert (false);
-  return 0;
+  return n-1;
 }
 
 __device__
