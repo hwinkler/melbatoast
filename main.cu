@@ -218,9 +218,10 @@ int* parseStates(const char* fileName){
   FILE * fp2 = fopen(fileName, "r");
   char line[1024];
 
-  int iState = 0;
-  while (iState < numParsedPotentials && fgets(line, sizeof(line)-1, fp2)) {
+ 
+  for (int iState = 0; iState < numParsedPotentials && fgets(line, sizeof(line)-1, fp2); iState++) {
     sscanf (line, "%d", states + iState);
+    printf("initial state %d = %d\n", iState, states[iState]);
   }
   fclose(fp2);
   return states;
