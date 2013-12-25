@@ -221,7 +221,6 @@ void parseStates(const char* fileName, int *states, int *fixed){
     char flag[2] ; 
     flag[0]='\0';
     sscanf (line, "%d %1s", states + iState, &flag);
-    printf("initial state %d: %d %1s\n", iState, states[iState], flag);
     if (flag[0]){
       fixed[iState] = 1;
     } else {
