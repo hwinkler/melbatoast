@@ -213,18 +213,23 @@ void parseNetwork(const char * fileName){
   fclose(fp1);
 }
   
-int* parseStates(const char* fileName){
-  int *states =(int*) calloc (numParsedPotentials, sizeof(int));
+void parseStates(const char* fileName, int *states, int *fixed){
+  
   FILE * fp2 = fopen(fileName, "r");
   char line[1024];
-
- 
   for (int iState = 0; iState < numParsedPotentials && fgets(line, sizeof(line)-1, fp2); iState++) {
-    sscanf (line, "%d", states + iState);
-    printf("initial state %d = %d\n", iState, states[iState]);
+    char flag[2] ; 
+    flag[0]='\0';
+    sscanf (line, "%d %1s", states + iState, &flag);
+    printf("initial state %d: %d %1s\n", iState, states[iState], flag);
+    if (flag[0]){
+      fixed[iState] = 1;
+    } else {
+      fixed[iState] = 0;
+    }
   }
   fclose(fp2);
-  return states;
+
 }
 
 int verboseFlag = 0;
@@ -342,7 +347,10 @@ int main(int argc, char** argv){
   selectGPU(verboseFlag);
 
   parseNetwork(networkFileName);
-  int * states = parseStates(stateFileName);
+
+  int *states =(int*) calloc (numParsedPotentials, sizeof(int));
+  int *fixed =(int*) calloc (numParsedPotentials, sizeof(int));
+  parseStates(stateFileName, states, fixed);
  
   Potential* devPotentials;
   CUDA_CALL(cudaMalloc ( (void**) &devPotentials, numParsedPotentials *sizeof( Potential ) ));
@@ -368,8 +376,7 @@ int main(int argc, char** argv){
   // If any state is negative, that is a flag that its state is evidence, i.e. 
   // measured data.
   for (int iState=0; iState < numParsedPotentials; iState++){
-    if (states[iState] < 0){
-      states[iState] = -states[iState];
+    if (fixed[iState] ){
       freezeDevicePotential(devPotentials + iState, 1);
     }
   }
@@ -381,7 +388,8 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMemcpy (devStates, states, numParsedPotentials* sizeof(int), cudaMemcpyHostToDevice));
 
   free(states);
-  states = NULL;
+  free(fixed);
+  states = fixed = NULL;
 
   int * devCounts ;
   CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
