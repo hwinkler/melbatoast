@@ -3,7 +3,7 @@ a.out
 **/*.o
 **/*.a
 **/.DS_Store
-jensen
+gibbs
 main
 tests/projection
 gram.out
