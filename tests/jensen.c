@@ -57,7 +57,7 @@ int main (int argc, char ** argv){
 
   int  states [5] = {0,1,0,0,1};
 
-  b->isFrozen = e->isFrozen = true;
+  //b->isFrozen = e->isFrozen = true;
 
   const int numPotentials = 5;
 
@@ -68,7 +68,7 @@ int main (int argc, char ** argv){
   }
   int counts[numPossibleConfigurations];
 
-  gibbs(potentials, numPotentials, states, counts, numPossibleConfigurations, 1000000);
+  gibbs(potentials, numPotentials, states, counts, numPossibleConfigurations, 1000);
 
 
   for (int j=0; j < numPossibleConfigurations; j++){

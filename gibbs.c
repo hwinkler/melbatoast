@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "gibbs.h"
 #include "projection.h"
-
+#define DEBUG 1
 #ifndef DEBUG
 #define DEBUG 0
 #endif
@@ -53,8 +53,8 @@ int _drawFromCumulative (float* cumulative, int n){
     }
   }
   DPRINT("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
-  assert (false);
-  return 0;
+  // assert (false);
+  return n-1;
 }
 
 void _conditionalGiven(const Potential *const potentials , int offset, const int * const states, int indexUnfixed, float* distribution){
