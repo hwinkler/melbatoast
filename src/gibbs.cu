@@ -92,8 +92,8 @@ int _drawFromCumulative (float* cumulative, int n, curandState* rndState){
       return i;
     }
   }
-  DPRINT("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
-  assert (false);
+  //DPRINT("drawFromCumulative %d %f %f\n", n, r, cumulative[n-1]);
+  //assert (false);
   return n-1;
 }
 

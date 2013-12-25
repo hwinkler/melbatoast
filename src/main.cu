@@ -394,8 +394,8 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
   CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations*   sizeof(int)));
 
-  const int numTotal = 1000;
-  const int N=1, M=1;
+  const int numTotal = 10000000;
+  const int N=100, M=100;
   const int numIterations = numTotal/(M*N);
   
   gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, numIterations);
@@ -414,6 +414,6 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaFree (devPotentials));
   CUDA_CALL(cudaFree (devStates));
   CUDA_CALL(cudaFree (devCounts));
-
+  CUDA_CALL(cudaDeviceReset());
   
 }
