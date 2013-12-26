@@ -5,7 +5,7 @@
 
 #define DPRINT(...)
 
-__device__ double rnd(curandState* state) {
+__device__ float rnd(curandState* state) {
   return curand_uniform( state );
 }
 
@@ -84,7 +84,7 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
 
 __device__
 int _drawFromCumulative (float* cumulative, int n, curandState* rndState){
-  double r =  rnd(rndState);
+  float r =  rnd(rndState);
   
   for (int i=0; i<n; i++){
    
