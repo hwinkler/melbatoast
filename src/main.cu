@@ -395,9 +395,9 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations*   sizeof(int)));
 
   const int numTotal = 10000000;
-  const int N=100, M=100;
+  const int N=100, M=512;
   const int numIterations = numTotal/(M*N);
-  
+
   gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, numIterations);
 
   int counts[numConfigurations];
