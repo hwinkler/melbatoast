@@ -12,3 +12,4 @@ gram.cu
 gram.c
 .settings
 Debug
+Release
