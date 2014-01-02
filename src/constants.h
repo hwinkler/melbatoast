@@ -8,3 +8,7 @@
 
 #define MAX_PARENTS 5
 #define MAX_CHILDREN 5
+
+
+#define NUM_TOTAL 1000000
+#define THREADS_PER_BLOCK 512

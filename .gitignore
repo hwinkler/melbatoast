@@ -10,3 +10,6 @@ gram.out
 gram.c
 gram.cu
 gram.c
+.settings
+Debug
+Release

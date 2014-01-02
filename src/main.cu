@@ -22,10 +22,6 @@
 
 #define DPRINT(...)                                             \
   //do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
-#define ASSERT(...)
-#undef assert
-#define assert(...)
-
 
 int freezeDevicePotential(Potential *pd, int frozen){
   Potential p;  
@@ -394,26 +390,38 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
   CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations*   sizeof(int)));
 
-  const int numTotal = 1000;
-  const int N=1, M=1;
-  const int numIterations = numTotal/(M*N);
-  
+  int numTotal = NUM_TOTAL;
+  int M=32, N=numTotal/M;
+  int numIterations = numTotal/(M*N);
+
+  const int MIN_ITERATIONS=1000;
+  while(numIterations < MIN_ITERATIONS){
+    numIterations *= M;
+    N = numTotal/M/numIterations;
+  }
+  numTotal = M*N * numIterations;
+
+  printf ("#total: %d, #blocks: %d, #tpb: %d, #iter: %d\n",numTotal, N, M, numIterations);   
   gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, numIterations);
 
   int counts[numConfigurations];
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
 
+  int numDone = 0;
   for (int j=0; j < numConfigurations; j++){
       printf("%4d: ", j);
     for (int n =0; n< 1; n++){
       printf("%6d", counts[j + n * numConfigurations ]);
+      numDone +=  counts[j + n * numConfigurations ];
     }
     printf("\n");
   }
-
+  printf ("total %d\n", numDone);
+  assert (numDone == numTotal);
+ 
   CUDA_CALL(cudaFree (devPotentials));
   CUDA_CALL(cudaFree (devStates));
   CUDA_CALL(cudaFree (devCounts));
-
+  CUDA_CALL(cudaDeviceReset());
   
 }
