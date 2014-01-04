@@ -347,6 +347,7 @@ int main(int argc, char** argv){
   int *fixed =(int*) calloc (numParsedPotentials, sizeof(int));
   parseStates(stateFileName, states, fixed);
  
+  clock_t t0 = clock();
   Potential* devPotentials;
   CUDA_CALL(cudaMalloc ( (void**) &devPotentials, numParsedPotentials *sizeof( Potential ) ));
 
@@ -418,6 +419,11 @@ int main(int argc, char** argv){
   }
   printf ("total %d\n", numDone);
   assert (numDone == numTotal);
+
+  clock_t t1 = clock();
+  if (verboseFlag) {
+    printf("elapsed: %f s\n", (float)(t1-t0)/CLOCKS_PER_SEC);
+  }
  
   CUDA_CALL(cudaFree (devPotentials));
   CUDA_CALL(cudaFree (devStates));
