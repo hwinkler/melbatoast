@@ -86,6 +86,7 @@
 								<option id="nvcc.compiler.option.level.914211280" name="Generate host debug information (-g)" superClass="nvcc.compiler.option.level"/>
 								<option defaultValue="nvcc.compiler.optimization.level.most" id="nvcc.compiler.optimization.level.702891657" name="Optimization Level" superClass="nvcc.compiler.optimization.level" valueType="enumerated"/>
 								<option id="nvcc.compiler.pic.1563492566" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
+								<option id="nvcc.compiler.maxregcount.149042485" name="Maximum number of registers (-maxrregcount)" superClass="nvcc.compiler.maxregcount" value="32" valueType="string"/>
 								<inputType id="nvcc.compiler.input.cu.1976241790" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.186265624" superClass="nvcc.compiler.input.cpp"/>
 								<inputType id="nvcc.compiler.input.c.1468452558" superClass="nvcc.compiler.input.c"/>
@@ -116,6 +117,7 @@
 					<sass major="3" minor="5"/>
 					<ptx major="3" minor="5"/>
 				</executable>
+				<editor-arch major="3" minor="5"/>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
