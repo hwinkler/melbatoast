@@ -20,7 +20,7 @@ __device__
 void projection (
                  const int *const dimensions,
                  const int *const indices,
-                 int numDimensions,
+                 const int numDimensions,
                  int *offsetOut,
                  int *lengthOut,
                  int *strideOut) {
@@ -62,7 +62,7 @@ void _initDistribution (float* distribution, int n){
 }
 
 __device__
-void _normalizeDistribution (float* distribution, int n){
+void _normalizeDistribution ( float*  distribution, int n){
   float sum = 0.f;
   for (int i=0; i< n; i++){
     assert(distribution[i] > 0.f);
@@ -75,7 +75,7 @@ void _normalizeDistribution (float* distribution, int n){
 }
 
 __device__
-void _cumulativeDistribution (float* distribution, float * cumulative, int n){
+void _cumulativeDistribution (const float* const distribution, float * cumulative, int n){
   cumulative[0] = distribution[0];
   for (int i=1; i< n; i++){
     cumulative[i] = cumulative[i-1] + distribution[i] ;
@@ -83,7 +83,7 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
 }
 
 __device__
-int _drawFromCumulative (float* cumulative, int n, curandState* rndState){
+int _drawFromCumulative (const float* const cumulative, int n, curandState* rndState){
   float r =  rnd(rndState);
   
   for (int i=0; i<n; i++){
@@ -98,7 +98,11 @@ int _drawFromCumulative (float* cumulative, int n, curandState* rndState){
 }
 
 __device__
-void _conditionalGiven(const Potential *const potentials , int offset, const int * const states, int indexUnfixed, float* distribution){
+void _conditionalGiven(
+    const Potential * __restrict potentials ,
+    int offset,
+    const int * __restrict states,
+    int indexUnfixed, float* distribution){
 
   const Potential *const potential = potentials + offset;
   int numDimensions = potential->numParents + 1;
@@ -122,12 +126,12 @@ void _conditionalGiven(const Potential *const potentials , int offset, const int
   
   for (int iState =0; iState < potential->numStates; iState++){
     assert (offsetOut + iState * strideOut < potential->numConditionals);
-    distribution[iState] *= potential->conditionals[offsetOut + iState * strideOut]; 
+    distribution[iState] *= __ldg( potential->conditionals + offsetOut + iState * strideOut);
   }
 }
 
 __global__
-void gibbs (const Potential* const potentials, int numPotentials, const int *const initialStates,
+void gibbs ( const Potential* __restrict__  potentials, int numPotentials, const int *__restrict__ initialStates,
             int countsBase[], int numCounts, int numIterations) {
   curandState rndState;
   rndSeed(&rndState);

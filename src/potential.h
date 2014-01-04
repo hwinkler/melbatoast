@@ -1,9 +1,10 @@
 #pragma once
 #include "constants.h"
 
-typedef struct __align__(8) Potential {
+class Potential {
+public:
   int   numStates;
-  float *conditionals;
+  const float * __restrict conditionals;
   int numConditionals;   // this is here mainly for debugging
   int numParents;
   int numChildren;
@@ -12,7 +13,7 @@ typedef struct __align__(8) Potential {
   int indexInChild [MAX_CHILDREN];
   int dimensions [MAX_PARENTS + 1];
   int isFrozen; 
-} Potential;
+};
 
 //int printDevicePotential (Potential*p);
 

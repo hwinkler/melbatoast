@@ -8,7 +8,6 @@
 
 #include <cuda.h>
 
-
 #include "constants.h"
 #include "potential.h"
 #include "cudacall.h"
@@ -22,6 +21,7 @@
 
 #define DPRINT(...)                                             \
   //do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
+
 
 int freezeDevicePotential(Potential *pd, int frozen){
   Potential p;  
@@ -347,7 +347,7 @@ int main(int argc, char** argv){
   int *fixed =(int*) calloc (numParsedPotentials, sizeof(int));
   parseStates(stateFileName, states, fixed);
  
-  clock_t t0 = clock();
+
   Potential* devPotentials;
   CUDA_CALL(cudaMalloc ( (void**) &devPotentials, numParsedPotentials *sizeof( Potential ) ));
 
@@ -377,7 +377,22 @@ int main(int argc, char** argv){
     }
   }
 
- // initial config: ynyyn  (we use y=0, n=1)
+  int numTotal = NUM_TOTAL;
+  int M=512, N=numTotal/M;
+  int numIterations = numTotal/(M*N);
+
+  const int MIN_ITERATIONS=1000;
+  while(numIterations < MIN_ITERATIONS){
+    numIterations *= 2;
+    N = numTotal/M/numIterations;
+    //printf ("#total: %d, #blocks: %d, #tpb: %d, #iter: %d\n",numTotal, N, M, numIterations);
+  }
+  numTotal = M*N * numIterations;
+
+  printf ("#total: %d, #blocks: %d, #tpb: %d, #iter: %d\n",numTotal, N, M, numIterations);
+
+  timespec  t0, t1, t2, t3;
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t0);
 
   int * devStates;
   CUDA_CALL(cudaMalloc((void**)&devStates,  numParsedPotentials* sizeof(int)));
@@ -391,22 +406,15 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMalloc( (void**) &devCounts, numConfigurations* sizeof(int)));
   CUDA_CALL(cudaMemset (devCounts, 0, numConfigurations*   sizeof(int)));
 
-  int numTotal = NUM_TOTAL;
-  int M=32, N=numTotal/M;
-  int numIterations = numTotal/(M*N);
-
-  const int MIN_ITERATIONS=1000;
-  while(numIterations < MIN_ITERATIONS){
-    numIterations *= M;
-    N = numTotal/M/numIterations;
-  }
-  numTotal = M*N * numIterations;
-
-  printf ("#total: %d, #blocks: %d, #tpb: %d, #iter: %d\n",numTotal, N, M, numIterations);   
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
   gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, numIterations);
+  cudaDeviceSynchronize();
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+
 
   int counts[numConfigurations];
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t3);
 
   int numDone = 0;
   for (int j=0; j < numConfigurations; j++){
@@ -420,9 +428,10 @@ int main(int argc, char** argv){
   printf ("total %d\n", numDone);
   assert (numDone == numTotal);
 
-  clock_t t1 = clock();
   if (verboseFlag) {
-    printf("elapsed: %f s\n", (float)(t1-t0)/CLOCKS_PER_SEC);
+    printf("elapsed: %f s; kernel %f\n",
+        1.0E-9 * (t3.tv_nsec - t0.tv_nsec),
+        1.0E-9 * (t2.tv_nsec - t1.tv_nsec));
   }
  
   CUDA_CALL(cudaFree (devPotentials));
