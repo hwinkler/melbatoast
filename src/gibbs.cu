@@ -56,6 +56,7 @@ void projection (
 
 __device__
 void _initDistribution (float* distribution, int n){
+  #pragma unroll
   for (int i=0; i< n; i++){
     distribution[i] = 1.0f;
   }
@@ -64,11 +65,13 @@ void _initDistribution (float* distribution, int n){
 __device__
 void _normalizeDistribution ( float*  distribution, int n){
   float sum = 0.f;
+  #pragma unroll
   for (int i=0; i< n; i++){
     assert(distribution[i] > 0.f);
     sum += distribution[i] ;
   }
   float scale = 1.f / sum;
+  #pragma unroll
   for (int i=0; i< n; i++){
     distribution[i] *= scale ;
   }
@@ -85,7 +88,7 @@ void _cumulativeDistribution (const float* const distribution, float * cumulativ
 __device__
 int _drawFromCumulative (const float* const cumulative, int n, curandState* rndState){
   float r =  rnd(rndState);
-  
+  #pragma unroll
   for (int i=0; i<n; i++){
    
     if ( r <= cumulative[i]){
@@ -109,6 +112,8 @@ void _conditionalGiven(
   int indices[MAX_DIMENSIONS];
 
   indices[0] = states[offset];
+
+  #pragma unroll
   for (int iParent=0; iParent < potential->numParents; iParent++){
     assert (iParent+1 < numDimensions);
     Potential *parent = potential->parents[iParent];
@@ -131,7 +136,7 @@ void _conditionalGiven(
 }
 
 __global__
-void gibbs ( const Potential* __restrict__  potentials, int numPotentials, const int *__restrict__ initialStates,
+void gibbs ( const Potential* __restrict  potentials, int numPotentials, const int *__restrict initialStates,
             int countsBase[], int numCounts, int numIterations) {
   curandState rndState;
   rndSeed(&rndState);
@@ -145,18 +150,20 @@ void gibbs ( const Potential* __restrict__  potentials, int numPotentials, const
   // int * counts = countsBase + blockIdx.x * numCounts;
   int counts[MAX_CONFIGURATIONS];
   memset ( counts, 0, numCounts* sizeof(int));
-    
+
   for (int i=0; i<numIterations; i++){
     
     for (int j=0; j < numPotentials; j++){
+      float distribution [MAX_STATES];
+      float cumulative [MAX_STATES];
+
       const Potential *const p = potentials + j;
       if (p->isFrozen){
         continue;
       }
-      
-      float distribution [MAX_STATES];
       _initDistribution(distribution, p->numStates);
-
+     // __syncthreads();
+      assert(distribution[0] == 1.0f);
            
       // Obtain the conditional distribution for the current potential
 
@@ -173,10 +180,9 @@ void gibbs ( const Potential* __restrict__  potentials, int numPotentials, const
       }
       
       _normalizeDistribution (distribution, p->numStates);
-      
-      float cumulative [MAX_STATES];
-      _cumulativeDistribution (distribution, cumulative, p->numStates);
 
+      _cumulativeDistribution (distribution, cumulative, p->numStates);
+      //__syncthreads();
       int newState = _drawFromCumulative(cumulative, p->numStates, &rndState);
 
       states[j] = newState;
