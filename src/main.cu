@@ -353,8 +353,11 @@ int main(int argc, char** argv){
 
   for (int i=0; i<numParsedPotentials; i++){
     initOnePotential (devPotentials + i, parsedPotentials, numParsedPotentials, i);
-    //printDevicePotential(devPotentials + i);
+    if (fixed[i] ){
+       freezeDevicePotential(devPotentials + i, 1);
+     }
   }
+
 
   if (verboseFlag){
     for (int i=0; i< numParsedPotentials; i++){
@@ -367,14 +370,6 @@ int main(int argc, char** argv){
   int numConfigurations = 1;
   for (int i=0; i< numParsedPotentials; i++){
     numConfigurations *= parsedPotentials[i]->numStates;
-  }
-
-  // If any state is negative, that is a flag that its state is evidence, i.e. 
-  // measured data.
-  for (int iState=0; iState < numParsedPotentials; iState++){
-    if (fixed[iState] ){
-      freezeDevicePotential(devPotentials + iState, 1);
-    }
   }
 
   int numTotal = NUM_TOTAL;
