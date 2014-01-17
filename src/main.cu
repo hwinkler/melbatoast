@@ -403,6 +403,7 @@ int main(int argc, char** argv){
 
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
   gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, numIterations);
+
   cudaDeviceSynchronize();
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
 
@@ -424,7 +425,7 @@ int main(int argc, char** argv){
   assert (numDone == numTotal);
 
   if (verboseFlag) {
-    printf("elapsed: %f s; kernel %f\n",
+    printf("elapsed: %f s; kernel %f s\n",
         1.0E-9 * (t3.tv_nsec - t0.tv_nsec),
         1.0E-9 * (t2.tv_nsec - t1.tv_nsec));
   }
