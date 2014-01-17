@@ -146,9 +146,8 @@ void gibbs ( const Potential* __restrict  potentials, int numPotentials, const i
   int states[MAX_POTENTIALS]; 
   memcpy (states, initialStates, numPotentials*sizeof(int));
   
-  // int * counts = countsBase + blockIdx.x * numCounts;
-  int* counts = (int*) malloc(numCounts*sizeof(int));
-  memset ( counts, 0, numCounts* sizeof(int));
+//  int* counts = (int*) malloc(numCounts*sizeof(int));
+//  memset ( counts, 0, numCounts* sizeof(int));
 
   for (int i=0; i<numIterations; i++){
     
@@ -195,14 +194,10 @@ void gibbs ( const Potential* __restrict  potentials, int numPotentials, const i
       config += states[j];
     }
     
-    counts[config] ++;
-  }
+    //counts[config] ++;
+    atomicAdd(countsBase+config, 1);
 
-  int * gCounts = countsBase ;//+ blockIdx.x * numCounts;
-  for (int i=0; i<numCounts; i++){
-    atomicAdd(gCounts+i, counts[i]);
   }
-  free(counts);
 
 }
 
