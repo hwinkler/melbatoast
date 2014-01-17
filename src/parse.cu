@@ -84,7 +84,7 @@ int parseTokens(FILE *fp)
 }
 
 #define MAX_PARENTS  1000
-#define MAX_TABLE  10000
+#define MAX_TABLE  1000000
 
 PotentialHandler handler;
 int potentialNumStates =0;
@@ -120,10 +120,18 @@ void addDim(Token dim) {
 }
 void addValue(Token value){
   //printf("\taddValue %lf\n", value.value);
+  if (potentialTableLength >= MAX_TABLE) {
+    fprintf(stderr, "Error: encountered more than %d table elements.", MAX_TABLE);
+    exit(1);
+  }
   potentialTable[potentialTableLength++] = value.value;
 }
 void addCondition(Token cond){
   //printf("\taddCondition %s\n", cond.z);
+  if (potentialNumParents >= MAX_PARENTS) {
+    fprintf(stderr, "Error: encountered more than %d parents.", MAX_PARENTS);
+    exit(1);
+  }
   char * p = (char*) malloc (1+strlen(cond.z));
   strcpy (p, cond.z);
   potentialParents[potentialNumParents++] = p;
