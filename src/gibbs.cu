@@ -127,7 +127,6 @@ void _conditionalGiven(
   int offsetOut = 0, lengthOut =0, strideOut =0;
   projection ( potential->dimensions, indices, numDimensions,
                &offsetOut, &lengthOut, &strideOut);
-  assert (lengthOut == potential->numStates);
   
   for (int iState =0; iState < potential->numStates; iState++){
     assert (offsetOut + iState * strideOut < potential->numConditionals);
@@ -148,7 +147,7 @@ void gibbs ( const Potential* __restrict  potentials, int numPotentials, const i
   memcpy (states, initialStates, numPotentials*sizeof(int));
   
   // int * counts = countsBase + blockIdx.x * numCounts;
-  int counts[MAX_CONFIGURATIONS];
+  int* counts = (int*) malloc(numCounts*sizeof(int));
   memset ( counts, 0, numCounts* sizeof(int));
 
   for (int i=0; i<numIterations; i++){
@@ -203,6 +202,7 @@ void gibbs ( const Potential* __restrict  potentials, int numPotentials, const i
   for (int i=0; i<numCounts; i++){
     atomicAdd(gCounts+i, counts[i]);
   }
+  free(counts);
 
 }
 
