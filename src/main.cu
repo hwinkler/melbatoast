@@ -414,9 +414,9 @@ int main(int argc, char** argv){
 
   int numDone = 0;
   for (int j=0; j < numConfigurations; j++){
-      printf("%4d: ", j);
+      printf("%4d ", j);
     for (int n =0; n< 1; n++){
-      printf("%6d", counts[j + n * numConfigurations ]);
+      printf(",%6d", counts[j + n * numConfigurations ]);
       numDone +=  counts[j + n * numConfigurations ];
     }
     printf("\n");
