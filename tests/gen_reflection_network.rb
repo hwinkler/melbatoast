@@ -1,12 +1,10 @@
 #!/usr/bin/env ruby
-# This program generates two files for input to the Gibbs sampler.
+# This program generates a network definition file for input to the Gibbs sampler.
 # It creates parameters for solving the case of a single reflection at
 # an interface using the acoustic solution. Given two layers
 # separated by an interface, and given the measured reflection amplitude
 # at a range of ray parameters, determine the the layer slownesses and 
 # densities of the two layers. 
-
-# This program creates two files: a network definition, and an initial state.
 
 require 'trollop'
 
@@ -25,12 +23,6 @@ opts = Trollop::options do
   opt :pmax, "High ray parameter", :type => :float, :required => true
   opt :np, "Number of ray parameters", :type => :int, :required => true
 
-  opt :rho1, "True density above", :type => :float, :required => true
-  opt :u1, "True slowness above", :type => :float, :required => true
-  opt :rho2, "True density below", :type => :float, :required => true
-  opt :u2, "True slowness below", :type => :float, :required => true
- 
-  opt :state, "Generate a state file instead of a network"
 end
 
 Trollop::die :rhomin, "must be positive" if opts[:rhomin]  <= 0
@@ -65,32 +57,6 @@ np = opts[:np]
 
 c0 = opts[:cmin]
 nc = opts[:nc]
-
-
-if opts[:state]
-  u1 = opts[:u1]
-  u2 = opts[:u2]
-  rho1 = opts[:rho1]
-  rho2 = opts[:rho2]
-
-  puts "#{((rho1 - rho0)/drho).floor}"
-  puts "#{((u1 - u0)/du).floor}"
-  puts "#{((rho2 - rho0)/drho).floor}"
-  puts "#{((u2 - u0)/du).floor}"
-
-  def rfc(rayp, u1, rho1, u2, rho2)
-    y1 = u1/rho1 * Complex( 1 - rayp*rayp/(u1*u1))**0.5 
-    y2 = u2/rho2 * Complex( 1 - rayp*rayp/(u2*u2))**0.5
-    (y1-y2)/(y1+y2)
-  end
-
-  (1..np).each do |x|
-           rayp =  (x-1) * dp + p0     
-           c = rfc(rayp, u1, rho1, u2, rho2)
-           puts "#{((c - c0)/dc).abs.floor} f"
-         end
-  exit 0
-end
 
 # Make arrays for the rho and u values. Offset the values to the bin centers.
 rho1a = (1..nrho).map {|x| (x-1) * drho + rho0 + drho/2} 
