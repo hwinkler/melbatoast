@@ -85,6 +85,7 @@ const int POTENTIALINFO_BLOCK_SIZE = 1000;
 typedef struct PotentialInfo {
   char* name;
   char** parentNames;
+  char** states;
   int numStates;
   int  numParents;
   float *table;
@@ -112,7 +113,7 @@ char *allocName (char * src){
 /// We just save the info for later.
 ///
 
-void parseCallback(char* name, int numStates, char**parents, int numParents, float* table, int lengthTable){
+void parseCallback(char* name, char** states, int numStates, char**parents, int numParents, float* table, int lengthTable){
   //printf("callback %s \n numStates %d \n parents[", name, numStates);
   for (int i=0; i< numParents; i++){
     //printf (" %s", parents[i] );
@@ -136,6 +137,10 @@ void parseCallback(char* name, int numStates, char**parents, int numParents, flo
   pi->parentNames = (char**) calloc(numParents, sizeof(char*));
   for (int i=0; i< numParents; i++){
     pi->parentNames[i] = allocName(parents[i]);
+  }
+  pi->states = (char**) calloc(numStates, sizeof(char*));
+  for (int i=0; i< numStates; i++){
+    pi->states[i] = allocName(states[i]);
   }
   pi->numStates = numStates;
   pi->numParents = numParents;

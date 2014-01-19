@@ -84,6 +84,7 @@ void startPotential(Token label){
   //printf("\tstartPotential %s \n" , label.z);
   
   handler (label.z, 
+           potentialStates,
            potentialNumStates,
            potentialParents,
            potentialNumParents,

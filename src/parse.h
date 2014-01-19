@@ -17,7 +17,7 @@ void addCondition(Token cond);
 void done();
 
 
-typedef void (*PotentialHandler)(char* name, int numStates, char**parents, int numParents, float* table, int lengthTable);
+  typedef void (*PotentialHandler)(char* name, char** states, int numStates, char**parents, int numParents, float* table, int lengthTable);
 
 void parse (FILE* fp, PotentialHandler handler1);
 
