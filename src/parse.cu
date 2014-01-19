@@ -138,8 +138,3 @@ void parse (FILE* fp, PotentialHandler handler1) {
   parseTokens(fp);
 }
 
-/* int main (){ */
-/*   FILE * fp = fopen("jensen.bn", "r"); */
-/*   parseTokens(fp); */
-/*   fclose(fp); */
-/* } */
