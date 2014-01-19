@@ -26,16 +26,9 @@ int isNumber (const char *s){
   return allDigits;
 }
 
-int beginsWithDecimal (const char *s){
-  return '.' == s[0];
-}
 int beginsWithApostrophe (const char *s){
   return '\'' == s[0];
 }
-int hasDecimal(const char* s){
-  return strstr(s, ".") != 0;
-}
-
 
 int parseTokens(FILE *fp)
 {
