@@ -22,6 +22,38 @@
 #define DPRINT(...)                                             \
   //do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
 
+typedef struct Count {
+
+  int count;
+  int posterior[MAX_POTENTIALS];
+  char *category[MAX_POTENTIALS];
+}Count;
+
+typedef struct PotentialInfo {
+  char* name;
+  char** parentNames;
+  char** states;
+  int numStates;
+  int  numParents;
+  float *table;
+  int lengthTable;
+  Potential *devPtr;
+}PotentialInfo;
+
+
+int compareCounts(const void *a, const void *b) {
+  Count * ca = (Count*) a;
+  Count * cb = (Count*) b;
+  int n=0;
+  if (cb->count < ca->count) {
+    n= -1;
+  } else if ( cb->count == ca->count){
+    n= 0;
+  } else {
+    n= 1;
+  }
+  return n;
+}
 
 int freezeDevicePotential(Potential *pd, int frozen){
   Potential p;  
@@ -82,16 +114,6 @@ int printDevicePotential (Potential*pd) {
 
 const int POTENTIALINFO_BLOCK_SIZE = 1000;
 
-typedef struct PotentialInfo {
-  char* name;
-  char** parentNames;
-  char** states;
-  int numStates;
-  int  numParents;
-  float *table;
-  int lengthTable;
-  Potential *devPtr;
-}PotentialInfo;
 
 struct PotentialInfo **parsedPotentials =
   (PotentialInfo**)malloc(POTENTIALINFO_BLOCK_SIZE * sizeof(PotentialInfo*));
@@ -331,6 +353,23 @@ void printTime(){
   printf("%s", outstr);
 }
 
+void decodeConfiguration(
+    int config,
+    PotentialInfo **parsedPotentials,
+    int numParsedPotentials,
+    int  posterior[],
+    char** category){
+
+  int div = 1;
+  for (int i=numParsedPotentials-1; i>=0; --i){
+
+    int state = (config/div) % parsedPotentials[i]->numStates;
+    posterior[i] = state;
+    category[i] = parsedPotentials[i]->states[state];
+    div *=  parsedPotentials[i]->numStates;
+  }
+}
+
 int main(int argc, char** argv){
   options(argc, argv);
   if (networkFileName == NULL || stateFileName == NULL){
@@ -417,16 +456,40 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t3);
 
+  Count* counted = (Count*) calloc( numConfigurations, sizeof(Count) );
+  int numCounted = 0;
   int numDone = 0;
   for (int j=0; j < numConfigurations; j++){
-      printf("%4d ", j);
-    for (int n =0; n< 1; n++){
-      printf(",%6d", counts[j + n * numConfigurations ]);
-      numDone +=  counts[j + n * numConfigurations ];
+    int count = counts[j];
+    if (count > 0){
+      decodeConfiguration(j, parsedPotentials, numParsedPotentials, counted[numCounted].posterior, counted[numCounted].category);
+      counted[numCounted].count = count;
+      numCounted += 1;
+    }
+    numDone += count;
+//    printf("%4d ", j);
+//    for (int n =0; n< 1; n++){
+//      printf(",%6d", counts[j + n * numConfigurations ]);
+//      numDone +=  counts[j + n * numConfigurations ];
+//    }
+//    printf("\n");
+  }
+
+
+  qsort (counted, numCounted, sizeof(Count), compareCounts);
+  for (int j=0; j < numCounted; j++){
+    const Count& count = counted[j];
+    printf("%4d", count.count);
+    for (int n=0; n< numParsedPotentials; n++){
+      printf (",%3d", count.posterior[n] );
+    }
+    for (int n=0; n< numParsedPotentials; n++){
+      printf (",%10s", count.category[n] );
     }
     printf("\n");
   }
-  printf ("total %d\n", numDone);
+
+
   assert (numDone == numTotal);
 
   if (verboseFlag) {

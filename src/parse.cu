@@ -109,7 +109,7 @@ void addCategory (Token symbol){
     exit(1);
   }
   char * p = (char*) malloc (1+strlen(symbol.z));
-  strcpy (p, symbol.z);
+  strcpy (p, symbol.z +1); // +1 to skip the leading "'"
   potentialStates[potentialNumStates] = p;
   potentialNumStates++;
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-
+#define MAX_SYMBOL_LENGTH 32
 #define MAX_DIMENSIONS 10
 #define MAX_STATES 10
 #define MAX_POTENTIALS 100
