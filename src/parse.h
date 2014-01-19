@@ -11,7 +11,7 @@ extern "C" {
     };
 typedef struct Token Token;
 void startPotential(Token label);
-void addDim(Token value);
+void addCategory(Token symbol);
 void addValue(Token value);
 void addCondition(Token cond);
 void done();
