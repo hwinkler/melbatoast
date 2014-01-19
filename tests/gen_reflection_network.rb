@@ -86,7 +86,7 @@ puts
 
 pa.each do |p|
     pstr = "%.6f" % p
-    puts "C#{pstr.gsub('.','_')} #{nc}"
+    puts "C#{pstr.gsub('.','_')}|RHO1,U1,RHO2,U2 #{nc}"
 
     psq = p*p
     rho1a.each do |rho1| 
@@ -96,8 +96,7 @@ pa.each do |p|
                        u2a.each do |u2|
                             #puts "#  u1=#{u1} rho1=#{rho1} u2=#{u2} rho2=#{rho2}"
                             
-                            y2 = u2/rho2 * Complex( 1 - psq/(u2*u2))**0.5
-                            
+                            y2 = u2/rho2 * Complex( 1 - psq/(u2*u2))**0.5                            
                             
                             if (y1+y2) == 0  && (y1+y2) == 0
                               c = 1
@@ -121,6 +120,7 @@ pa.each do |p|
                      end
               end
          end
+    puts
   end
 
 

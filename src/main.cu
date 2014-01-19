@@ -408,7 +408,7 @@ int main(int argc, char** argv){
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
 
 
-  int counts[numConfigurations];
+  int* counts = (int*) malloc(numConfigurations * sizeof(int));
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t3);
 
@@ -430,6 +430,7 @@ int main(int argc, char** argv){
         1.0E-9 * (t2.tv_nsec - t1.tv_nsec));
   }
  
+  free(counts);
   CUDA_CALL(cudaFree (devPotentials));
   CUDA_CALL(cudaFree (devStates));
   CUDA_CALL(cudaFree (devCounts));

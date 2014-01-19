@@ -53,7 +53,6 @@ dc = (opts[:cmax] - opts[:cmin])/ opts[:nc]
 # ray parameter bounds don't define bins; they define the discrete values of p.
 dp = (opts[:pmax] - opts[:pmin])/ (opts[:np] - 1) 
 
-
 rho0 = opts[:rhomin]
 u0 = opts[:pmin]
 p0 = opts[:pmin]
@@ -71,10 +70,14 @@ u2 = opts[:u2]
 rho1 = opts[:rho1]
 rho2 = opts[:rho2]
 
-puts "#{((rho1 - rho0)/drho).floor}"
-puts "#{((u1 - u0)/du).floor}"
-puts "#{((rho2 - rho0)/drho).floor}"
-puts "#{((u2 - u0)/du).floor}"
+def clip (low, high, f)
+  [high, [low, f].max].min
+end
+
+puts "#{ clip(0, nrho-1, ((rho1 - rho0)/drho).floor)}"
+puts "#{ clip(0, nu-1, ((u1 - u0)/du).floor)}"
+puts "#{ clip(0, nrho-1, ((rho2 - rho0)/drho).floor)}"
+puts "#{ clip(0, nu-1, ((u2 - u0)/du).floor)}"
 
 def rfc(rayp, u1, rho1, u2, rho2)
   y1 = u1/rho1 * Complex( 1 - rayp*rayp/(u1*u1))**0.5 
@@ -85,6 +88,8 @@ end
 (1..np).each do |x|
          rayp =  (x-1) * dp + p0     
          c = rfc(rayp, u1, rho1, u2, rho2)
-         puts "#{((c - c0)/dc).abs.floor} f"
+         slot = clip(0, nc-1, ((c - c0)/dc).abs.floor)
+         puts "#{slot} f"
+         $stderr.puts "#{c} => #{slot} => #{slot*dc + c0}"
        end
 

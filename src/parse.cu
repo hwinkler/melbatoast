@@ -84,7 +84,7 @@ int parseTokens(FILE *fp)
 }
 
 #define MAX_PARENTS  1000
-#define MAX_TABLE  1000000
+#define MAX_TABLE  10000000
 
 PotentialHandler handler;
 int potentialNumStates =0;
