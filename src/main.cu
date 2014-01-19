@@ -64,22 +64,16 @@ int freezeDevicePotential(Potential *pd, int frozen){
   return 0;
 }
 
-int printDevicePotential (Potential*pd) {
+int printDevicePotential (Potential*pd, char* name, char**states) {
   Potential p;  
   CUDA_CALL(cudaMemcpy ( &p,  pd, sizeof(p), cudaMemcpyDeviceToHost));
 
-  printf("%17s %6d\n",  "numStates", p.numStates);
+  printf("%17s %s:",  "name", name);
 
-  if (p.numConditionals >=0 && p.numConditionals < 1000){
-
-    float *conditionals = (float*) malloc(p.numConditionals * sizeof(float));
-    CUDA_CALL(cudaMemcpy ( conditionals,  p.conditionals, p.numConditionals * sizeof(p.conditionals[0]), cudaMemcpyDeviceToHost));
-
-    for (int i=0; i< p.numConditionals; i++){
-      printf("%11s[%3d] %6.3f\n",  "conditionals", i,  conditionals[i]);
-    }
-    free(conditionals);
+  for (int i=0; i<p.numStates; i++){
+    printf(" [%d]=%s", i, states[i]);
   }
+  printf("\n");
   printf("%17s %6d\n",  "numConditionals", p.numConditionals);
   printf("%17s %6d\n",  "numParents", p.numParents);
   printf("%17s %6d\n",  "numChildren", p.numChildren);
@@ -407,7 +401,7 @@ int main(int argc, char** argv){
     for (int i=0; i< numParsedPotentials; i++){
       Potential* p = devPotentials + i;
       printf ("\nPotential %c %p:\n", 'A' + i, p);
-      printDevicePotential(p);
+      printDevicePotential(p, parsedPotentials[i]->name, parsedPotentials[i]->states);
     }
   }
 
