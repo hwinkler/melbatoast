@@ -69,7 +69,7 @@ ca = (1..nc).map {|x| (x-1) * dc + c0 + dc/2}
 pa = (1..np).map {|x| (x-1) * dp + p0}
 
 def categories(a)
-  a.map{|x| "'" + ("%.3f" % x)}.join(' ')
+  a.map{|x| "'" + ("%.6f" % x)}.join(' ')
 end
 
 puts "RHO1 #{categories(rho1a)}"
