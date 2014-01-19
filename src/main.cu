@@ -22,6 +22,38 @@
 #define DPRINT(...)                                             \
   //do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
 
+typedef struct Count {
+
+  int count;
+  int posterior[MAX_POTENTIALS];
+  char *category[MAX_POTENTIALS];
+}Count;
+
+typedef struct PotentialInfo {
+  char* name;
+  char** parentNames;
+  char** states;
+  int numStates;
+  int  numParents;
+  float *table;
+  int lengthTable;
+  Potential *devPtr;
+}PotentialInfo;
+
+
+int compareCounts(const void *a, const void *b) {
+  Count * ca = (Count*) a;
+  Count * cb = (Count*) b;
+  int n=0;
+  if (cb->count < ca->count) {
+    n= -1;
+  } else if ( cb->count == ca->count){
+    n= 0;
+  } else {
+    n= 1;
+  }
+  return n;
+}
 
 int freezeDevicePotential(Potential *pd, int frozen){
   Potential p;  
@@ -32,22 +64,16 @@ int freezeDevicePotential(Potential *pd, int frozen){
   return 0;
 }
 
-int printDevicePotential (Potential*pd) {
+int printDevicePotential (Potential*pd, char* name, char**states) {
   Potential p;  
   CUDA_CALL(cudaMemcpy ( &p,  pd, sizeof(p), cudaMemcpyDeviceToHost));
 
-  printf("%17s %6d\n",  "numStates", p.numStates);
+  printf("%17s %s:",  "name", name);
 
-  if (p.numConditionals >=0 && p.numConditionals < 1000){
-
-    float *conditionals = (float*) malloc(p.numConditionals * sizeof(float));
-    CUDA_CALL(cudaMemcpy ( conditionals,  p.conditionals, p.numConditionals * sizeof(p.conditionals[0]), cudaMemcpyDeviceToHost));
-
-    for (int i=0; i< p.numConditionals; i++){
-      printf("%11s[%3d] %6.3f\n",  "conditionals", i,  conditionals[i]);
-    }
-    free(conditionals);
+  for (int i=0; i<p.numStates; i++){
+    printf(" [%d]=%s", i, states[i]);
   }
+  printf("\n");
   printf("%17s %6d\n",  "numConditionals", p.numConditionals);
   printf("%17s %6d\n",  "numParents", p.numParents);
   printf("%17s %6d\n",  "numChildren", p.numChildren);
@@ -82,15 +108,6 @@ int printDevicePotential (Potential*pd) {
 
 const int POTENTIALINFO_BLOCK_SIZE = 1000;
 
-typedef struct PotentialInfo {
-  char* name;
-  char** parentNames;
-  int numStates;
-  int  numParents;
-  float *table;
-  int lengthTable;
-  Potential *devPtr;
-}PotentialInfo;
 
 struct PotentialInfo **parsedPotentials =
   (PotentialInfo**)malloc(POTENTIALINFO_BLOCK_SIZE * sizeof(PotentialInfo*));
@@ -112,7 +129,7 @@ char *allocName (char * src){
 /// We just save the info for later.
 ///
 
-void parseCallback(char* name, int numStates, char**parents, int numParents, float* table, int lengthTable){
+void parseCallback(char* name, char** states, int numStates, char**parents, int numParents, float* table, int lengthTable){
   //printf("callback %s \n numStates %d \n parents[", name, numStates);
   for (int i=0; i< numParents; i++){
     //printf (" %s", parents[i] );
@@ -136,6 +153,10 @@ void parseCallback(char* name, int numStates, char**parents, int numParents, flo
   pi->parentNames = (char**) calloc(numParents, sizeof(char*));
   for (int i=0; i< numParents; i++){
     pi->parentNames[i] = allocName(parents[i]);
+  }
+  pi->states = (char**) calloc(numStates, sizeof(char*));
+  for (int i=0; i< numStates; i++){
+    pi->states[i] = allocName(states[i]);
   }
   pi->numStates = numStates;
   pi->numParents = numParents;
@@ -326,6 +347,23 @@ void printTime(){
   printf("%s", outstr);
 }
 
+void decodeConfiguration(
+    int config,
+    PotentialInfo **parsedPotentials,
+    int numParsedPotentials,
+    int  posterior[],
+    char** category){
+
+  int div = 1;
+  for (int i=numParsedPotentials-1; i>=0; --i){
+
+    int state = (config/div) % parsedPotentials[i]->numStates;
+    posterior[i] = state;
+    category[i] = parsedPotentials[i]->states[state];
+    div *=  parsedPotentials[i]->numStates;
+  }
+}
+
 int main(int argc, char** argv){
   options(argc, argv);
   if (networkFileName == NULL || stateFileName == NULL){
@@ -363,7 +401,7 @@ int main(int argc, char** argv){
     for (int i=0; i< numParsedPotentials; i++){
       Potential* p = devPotentials + i;
       printf ("\nPotential %c %p:\n", 'A' + i, p);
-      printDevicePotential(p);
+      printDevicePotential(p, parsedPotentials[i]->name, parsedPotentials[i]->states);
     }
   }
 
@@ -412,16 +450,40 @@ int main(int argc, char** argv){
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t3);
 
+  Count* counted = (Count*) calloc( numConfigurations, sizeof(Count) );
+  int numCounted = 0;
   int numDone = 0;
   for (int j=0; j < numConfigurations; j++){
-      printf("%4d ", j);
-    for (int n =0; n< 1; n++){
-      printf(",%6d", counts[j + n * numConfigurations ]);
-      numDone +=  counts[j + n * numConfigurations ];
+    int count = counts[j];
+    if (count > 0){
+      decodeConfiguration(j, parsedPotentials, numParsedPotentials, counted[numCounted].posterior, counted[numCounted].category);
+      counted[numCounted].count = count;
+      numCounted += 1;
+    }
+    numDone += count;
+//    printf("%4d ", j);
+//    for (int n =0; n< 1; n++){
+//      printf(",%6d", counts[j + n * numConfigurations ]);
+//      numDone +=  counts[j + n * numConfigurations ];
+//    }
+//    printf("\n");
+  }
+
+
+  qsort (counted, numCounted, sizeof(Count), compareCounts);
+  for (int j=0; j < numCounted; j++){
+    const Count& count = counted[j];
+    printf("%4d", count.count);
+    for (int n=0; n< numParsedPotentials; n++){
+      printf (",%3d", count.posterior[n] );
+    }
+    for (int n=0; n< numParsedPotentials; n++){
+      printf (",%10s", count.category[n] );
     }
     printf("\n");
   }
-  printf ("total %d\n", numDone);
+
+
   assert (numDone == numTotal);
 
   if (verboseFlag) {

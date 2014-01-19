@@ -54,15 +54,22 @@ potentials ::= potential potentials EOFF.
 
 potentials ::= potential EOFF. 
 
-potential ::= WORD(label) parents INTEGER(dims) numbers. { 
-          addDim(dims);  
+potential ::= WORD(label) parents categories conditionals. {  
           startPotential(label);
 }
 
-numbers ::= numbers NUMBER(value)   . {
+categories ::= categories SYMBOL(symbol) .{
+  addCategory(symbol);
+}
+
+categories ::=  SYMBOL(symbol) .{
+  addCategory(symbol);
+}
+
+conditionals ::= conditionals NUMBER(value)   . {
         addValue(value);
 }
-numbers ::=  NUMBER(value) . {
+conditionals ::=  NUMBER(value) . {
         addValue(value);
 }
 

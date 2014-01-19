@@ -11,13 +11,13 @@ extern "C" {
     };
 typedef struct Token Token;
 void startPotential(Token label);
-void addDim(Token value);
+void addCategory(Token symbol);
 void addValue(Token value);
 void addCondition(Token cond);
 void done();
 
 
-typedef void (*PotentialHandler)(char* name, int numStates, char**parents, int numParents, float* table, int lengthTable);
+  typedef void (*PotentialHandler)(char* name, char** states, int numStates, char**parents, int numParents, float* table, int lengthTable);
 
 void parse (FILE* fp, PotentialHandler handler1);
 

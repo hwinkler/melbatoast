@@ -63,30 +63,35 @@ rho1a = (1..nrho).map {|x| (x-1) * drho + rho0 + drho/2}
 u1a = (1..nu).map {|x| (x-1) * du + u0 + du/2}
 rho2a = (1..nrho).map {|x| (x-1) * drho + rho0 + drho/2} 
 u2a = (1..nu).map {|x| (x-1) * du + u0 + du/2}
+ca = (1..nc).map {|x| (x-1) * dc + c0 + dc/2}
 
 # Make an array for the p values. No need to offset here.
 pa = (1..np).map {|x| (x-1) * dp + p0}
 
-puts "RHO1 #{nrho}"
+def categories(a)
+  a.map{|x| "'" + ("%.6f" % x)}.join(' ')
+end
+
+puts "RHO1 #{categories(rho1a)}"
 puts Array.new(nrho, 1.0/nrho).join(' ')
 puts
 
-puts "U1 #{nu}"
+puts "U1 #{categories(u1a)}"
 puts Array.new(nu, 1.0/nu).join(' ')
 puts
 
-puts "RHO2 #{nrho}"
+puts "RHO2 #{categories(rho2a)}"
 puts Array.new(nrho, 1.0/nrho).join(' ')
 puts
 
-puts "U2 #{nu}"
+puts "U2 #{categories(u2a)}"
 puts Array.new(nu, 1.0/nu).join(' ')
 puts
 
 
 pa.each do |p|
     pstr = "%.6f" % p
-    puts "C#{pstr.gsub('.','_')}|RHO1,U1,RHO2,U2 #{nc}"
+    puts "C#{pstr}|RHO1,U1,RHO2,U2 #{categories(ca)}"
 
     psq = p*p
     rho1a.each do |rho1| 

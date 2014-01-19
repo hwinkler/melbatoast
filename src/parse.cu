@@ -4,6 +4,7 @@
 #include <string.h>
 #include "gram.h"
 #include "parse.h"
+#include "constants.h"
 
 void *ParseAlloc(void *(*mallocProc)(size_t));
 void ParseFree(void*, void (*freeProc)(void*));
@@ -24,21 +25,10 @@ int isNumber (const char *s){
   }
   return allDigits;
 }
-int isInteger (const char *s){
-  int allDigits = 1;
-  for (int i=0; s[i]; i++){
-    allDigits = allDigits && isdigit(s[i]);
-  }
-  return allDigits;
-}
 
-int beginsWithDecimal (const char *s){
-  return '.' == s[0];
+int beginsWithApostrophe (const char *s){
+  return '\'' == s[0];
 }
-int hasDecimal(const char* s){
-  return strstr(s, ".") != 0;
-}
-
 
 int parseTokens(FILE *fp)
 {
@@ -56,14 +46,12 @@ int parseTokens(FILE *fp)
       // printf("token %s ", tok);
       if (beginsWithLetter(tok)) {
         //printf(" WORD\n");
-        t.n = WORD;
+        t.n = SYMBOL;
         Parse(pParser, WORD, t);
-      } else if ( isInteger(tok) ){
-        // printf(" INTEGER\n");
-        int n = 0;
-        sscanf(tok, "%d", &n);
-        t.value = n;
-        Parse (pParser, INTEGER, t);
+      } else if (beginsWithApostrophe(tok)) {
+        //printf(" WORD\n");
+        t.n = SYMBOL;
+        Parse(pParser, SYMBOL, t);
       } else if (isNumber(tok)) {
         // printf(" NUMBER\n");
         sscanf(tok, "%lf", &t.value);
@@ -83,10 +71,9 @@ int parseTokens(FILE *fp)
   return 0;
 }
 
-#define MAX_PARENTS  1000
-#define MAX_TABLE  10000000
 
 PotentialHandler handler;
+char *potentialStates[ MAX_STATES];
 int potentialNumStates =0;
 char *potentialParents[ MAX_PARENTS];
 int potentialNumParents = 0;
@@ -97,6 +84,7 @@ void startPotential(Token label){
   //printf("\tstartPotential %s \n" , label.z);
   
   handler (label.z, 
+           potentialStates,
            potentialNumStates,
            potentialParents,
            potentialNumParents,
@@ -114,10 +102,18 @@ void startPotential(Token label){
   potentialTableLength = 0;
            
 }
-void addDim(Token dim) {
-   //printf("\taddDim %d \n" ,(int) dim.value);
-  potentialNumStates = (int)dim.value;
+
+void addCategory (Token symbol){
+  if (potentialNumStates >= MAX_STATES) {
+    fprintf(stderr, "Error: encountered more than %d states.", MAX_STATES);
+    exit(1);
+  }
+  char * p = (char*) malloc (1+strlen(symbol.z));
+  strcpy (p, symbol.z +1); // +1 to skip the leading "'"
+  potentialStates[potentialNumStates] = p;
+  potentialNumStates++;
 }
+
 void addValue(Token value){
   //printf("\taddValue %lf\n", value.value);
   if (potentialTableLength >= MAX_TABLE) {
@@ -143,8 +139,3 @@ void parse (FILE* fp, PotentialHandler handler1) {
   parseTokens(fp);
 }
 
-/* int main (){ */
-/*   FILE * fp = fopen("jensen.bn", "r"); */
-/*   parseTokens(fp); */
-/*   fclose(fp); */
-/* } */
