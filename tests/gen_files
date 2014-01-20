@@ -1,0 +1,23 @@
+#!/bin/bash
+
+RHOMIN=1.0 
+RHOMAX=3.0
+NRHO=10 
+UMIN=0.0001 
+UMAX=0.0005
+NU=10 
+CMIN=0.1 
+CMAX=0.4
+NC=8
+PMIN=0.0001
+PMAX=0.0003
+NP=2
+RHO1=2.0
+U1=0.0004
+RHO2=2.6
+U2=0.00035
+
+./gen_reflection_network.rb --rhomin=$RHOMIN --rhomax=$RHOMAX --nrho=$NRHO --umin=$UMIN --umax=$UMAX --nu=$NU --cmin=$CMIN --cmax=$CMAX --nc=$NC --pmin=$PMIN --pmax=$PMAX --np=$NP > ./reflection.bn
+
+./gen_reflection_state.rb --rhomin=$RHOMIN --rhomax=$RHOMAX --nrho=$NRHO --umin=$UMIN --umax=$UMAX --nu=$NU --cmin=$CMIN --cmax=$CMAX --nc=$NC --pmin=$PMIN --pmax=$PMAX --np=$NP --rho1=$RHO1 --u1=$U1 --rho2=$RHO2 --u2=$U2 > reflection.state  
+
