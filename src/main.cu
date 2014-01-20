@@ -414,7 +414,7 @@ int main(int argc, char** argv){
   int M=512, N=numTotal/M;
   int numIterations = numTotal/(M*N);
 
-  const int MIN_ITERATIONS=1000;
+  const int MIN_ITERATIONS=100000;
   while(numIterations < MIN_ITERATIONS){
     numIterations *= 2;
     N = numTotal/M/numIterations;
@@ -422,7 +422,9 @@ int main(int argc, char** argv){
   }
   numTotal = M*N * numIterations;
 
-  printf ("#total: %d, #blocks: %d, #tpb: %d, #iter: %d\n",numTotal, N, M, numIterations);
+  if(verboseFlag){
+    printf ("#total: %d, #blocks: %d, #tpb: %d, #iter: %d\n",numTotal, N, M, numIterations);
+  }
 
   timespec  t0, t1, t2, t3;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t0);

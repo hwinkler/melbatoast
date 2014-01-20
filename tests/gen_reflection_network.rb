@@ -36,7 +36,7 @@ Trollop::die :cmax, "must be less than or equal to 1" if opts[:cmax] < -1
 Trollop::die :nc, "must be greater than one" if opts[:nc] <= 1
 
 # Divide the above ranges into bins. The low of the range is the low bound of the low
-# bin, and the gigh of the range is the high bound of the high bin.  That means the
+# bin, and the high of the range is the high bound of the high bin.  That means the
 # centers of the low and high bins are inset a bit from these bounds.
 
 drho = (opts[:rhomax] - opts[:rhomin])/ opts[:nrho] 
@@ -111,7 +111,7 @@ pa.each do |p|
                             answer = c.abs
                             #puts "# c=#{c}  answer=#{answer}"
                             
-                            slot = [ nc-1, [ 0, ((answer - c0)/dc).round].max].min 
+                            slot = [ nc-1, [ 0, ((answer - c0)/dc).floor].max].min 
 
                             #puts "# slot=#{slot}"
                             # give this slot 0.95, divide the remaining 0.05 equally
