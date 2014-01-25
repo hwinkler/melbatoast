@@ -445,14 +445,23 @@ int main(int argc, char** argv){
   gibbs<<<N,M>>>(devPotentials, numParsedPotentials, devStates, devCounts, numConfigurations, numIterations);
 
   cudaDeviceSynchronize();
+
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
 
 
   int* counts = (int*) malloc(numConfigurations * sizeof(int));
+  if ( counts == NULL){
+    fprintf(stderr,"Unable to allocate %d items of size %d bytes for counted.", numConfigurations, sizeof(int));
+    exit(1);
+  }
   CUDA_CALL(cudaMemcpy ( counts,  devCounts, numConfigurations*  sizeof(int), cudaMemcpyDeviceToHost));
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t3);
 
   Count* counted = (Count*) calloc( numConfigurations, sizeof(Count) );
+  if ( counted == NULL){
+    fprintf(stderr,"Unable to allocate %d items of size %d bytes for counted.", numConfigurations, sizeof(Count));
+    exit(1);
+  }
   int numCounted = 0;
   int numDone = 0;
   for (int j=0; j < numConfigurations; j++){
@@ -463,16 +472,10 @@ int main(int argc, char** argv){
       numCounted += 1;
     }
     numDone += count;
-//    printf("%4d ", j);
-//    for (int n =0; n< 1; n++){
-//      printf(",%6d", counts[j + n * numConfigurations ]);
-//      numDone +=  counts[j + n * numConfigurations ];
-//    }
-//    printf("\n");
   }
 
-
   qsort (counted, numCounted, sizeof(Count), compareCounts);
+ 
   for (int j=0; j < numCounted; j++){
     const Count& count = counted[j];
     printf("%4d", count.count);
