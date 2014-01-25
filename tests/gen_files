@@ -1,21 +1,25 @@
 #!/bin/bash
 
 RHOMIN=1.0 
-RHOMAX=3.0
+RHOMAX=4.0
 NRHO=10 
+
 UMIN=0.0001 
-UMAX=0.0005
+UMAX=0.0009
 NU=10 
+
 CMIN=0.1 
-CMAX=0.4
-NC=8
-PMIN=0.0001
-PMAX=0.0003
-NP=2
+CMAX=1.0
+NC=10
+
+PMIN=0.0000
+PMAX=0.0004
+NP=10
+
 RHO1=2.0
-U1=0.0004
+U1=0.0005
 RHO2=2.6
-U2=0.00035
+U2=0.0004
 
 ./gen_reflection_network.rb --rhomin=$RHOMIN --rhomax=$RHOMAX --nrho=$NRHO --umin=$UMIN --umax=$UMAX --nu=$NU --cmin=$CMIN --cmax=$CMAX --nc=$NC --pmin=$PMIN --pmax=$PMAX --np=$NP > ./reflection.bn
 
