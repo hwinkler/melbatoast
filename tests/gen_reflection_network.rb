@@ -103,12 +103,14 @@ pa.each do |p|
                             
                             y2 = u2/rho2 * Complex( 1 - psq/(u2*u2))**0.5                            
                             
-                            if (y1+y2) == 0  && (y1+y2) == 0
+                            if (y1-y2) == 0  && (y1+y2) == 0
                               c = 1
                             else
                               c = (y1 -y2) / (y1 + y2)
                             end
-                            answer = c.abs
+                            answer = c.abs #c.real maybe?
+                            #$stderr.puts("#{c.real},#{c.imag},#{c.abs} u1=#{u1}, u2=#{u2}")  if (c.imag.abs > 1.0E-10)
+                              
                             #puts "# c=#{c}  answer=#{answer}"
                             
                             slot = [ nc-1, [ 0, ((answer - c0)/dc).floor].max].min 
