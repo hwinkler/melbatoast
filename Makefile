@@ -1,5 +1,5 @@
 CC=c99
-CFLAGS=-O2  
+CFLAGS=-O3  -DNDEBUG
 
 all: tests 
 

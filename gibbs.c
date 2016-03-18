@@ -12,7 +12,7 @@
 #endif
 
 #define DPRINT(...)                                             \
-  do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
+  //do { if (DEBUG) fprintf(stderr, __VA_ARGS__); } while (0)
 
 
 // TODO: including mtwist.h caused duplicate defs in the linker
@@ -44,7 +44,7 @@ void _cumulativeDistribution (float* distribution, float * cumulative, int n){
 }
 
 int _drawFromCumulative (float* cumulative, int n){
-  double r =  mt_drand();
+  float r =  mt_drand();
   
   for (int i=0; i<n; i++){
    
@@ -94,7 +94,6 @@ void gibbs (const Potential* const potentials, int numPotentials, const int *con
   memcpy (states, initialStates, numPotentials*sizeof(int));
 
   memset (counts, 0, numCounts* sizeof(int));
-    
   for (int i=0; i<numIterations; i++){
     
     for (int j=0; j < numPotentials; j++){

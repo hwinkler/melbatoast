@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 #include "../potential.h"
 #include "../gibbs.h"
 
@@ -57,7 +58,7 @@ int main (int argc, char ** argv){
 
   int  states [5] = {0,1,0,0,1};
 
-  //b->isFrozen = e->isFrozen = true;
+  b->isFrozen = e->isFrozen = true;
 
   const int numPotentials = 5;
 
@@ -67,12 +68,15 @@ int main (int argc, char ** argv){
     numPossibleConfigurations *= potentials[i].numStates;
   }
   int counts[numPossibleConfigurations];
+  clock_t t0 = clock();  
 
-  gibbs(potentials, numPotentials, states, counts, numPossibleConfigurations, 1000);
-
+  gibbs(potentials, numPotentials, states, counts, numPossibleConfigurations, 100000000);
+  clock_t t1 = clock();
 
   for (int j=0; j < numPossibleConfigurations; j++){
     printf("%4d: %4d\n", j, counts[j]);
   }
+ 
+  printf("elapsed: %f s\n", (float)(t1-t0)/CLOCKS_PER_SEC);
 
 }
